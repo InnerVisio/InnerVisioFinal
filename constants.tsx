@@ -23,11 +23,11 @@ export const SERVICES: ServiceItem[] = [
     icon: Box,
     colSpan: 2,
     rowSpan: 2,
-    imageUrl: '/Exteriér/IMG_2578_opt.webp', 
+    imageUrl: '/Exterier/IMG_2578_opt.webp', 
     galleryUrls: [
-      '/Exteriér/IMG_2578_opt.webp',
-      '/Exteriér/Generated Image April 23, 2026 - 3_19AM_opt.webp',
-      '/Exteriér/Generated Image April 23, 2026 - 3_38AM_opt.webp'
+      '/Exterier/IMG_2578_opt.webp',
+      '/Exterier/exterier_1_opt.webp',
+      '/Exterier/exterier_2_opt.webp'
     ]
   },
   {
@@ -39,12 +39,12 @@ export const SERVICES: ServiceItem[] = [
     icon: Eye,
     colSpan: 1,
     rowSpan: 1,
-    imageUrl: '/Lipence/Obývací pokoj 1.webp',
+    imageUrl: '/Lipence/obyvaci_pokoj_1.webp',
     galleryUrls: [
-      '/Lipence/Obývací pokoj 1.webp',
-      '/Lipence/Obývací pokoj 2.webp',
-      '/Lipence/Kuchyně.webp',
-      '/Lipence/Kuchyně 1.webp'
+      '/Lipence/obyvaci_pokoj_1.webp',
+      '/Lipence/obyvaci_pokoj_2.webp',
+      '/Lipence/kuchyne.webp',
+      '/Lipence/kuchyne_1.webp'
     ]
   },
   {
@@ -56,9 +56,9 @@ export const SERVICES: ServiceItem[] = [
     icon: Cuboid,
     colSpan: 1,
     rowSpan: 2,
-    imageUrl: '/3DPudorys/Generated Image April 23, 2026 - 3_52AM_opt.webp',
+    imageUrl: '/3DPudorys/pudorys_3d_opt.webp',
     galleryUrls: [
-      '/3DPudorys/Generated Image April 23, 2026 - 3_52AM_opt.webp'
+      '/3DPudorys/pudorys_3d_opt.webp'
     ]
   },
   {
@@ -70,11 +70,11 @@ export const SERVICES: ServiceItem[] = [
     icon: Layers,
     colSpan: 1,
     rowSpan: 1,
-    imageUrl: '/2DPudorysy/1. Floor_opt.webp',
+    imageUrl: '/2DPudorysy/floor_1_opt.webp',
     galleryUrls: [
-      '/2DPudorysy/1. Floor_opt.webp',
-      '/2DPudorysy/2D Půdorys oprava_opt.webp',
-      '/2DPudorysy/Půdorys vizualizace_opt.webp'
+      '/2DPudorysy/floor_1_opt.webp',
+      '/2DPudorysy/pudorys_2d_2_opt.webp',
+      '/2DPudorysy/pudorys_2d_3_opt.webp'
     ]
   },
   {
@@ -179,7 +179,7 @@ export const PROJECTS: ProjectItem[] = [
       '/VizualizaceKancelare/IMG_9129_opt.webp',
       '/VizualizaceKancelare/IMG_9130_opt.webp',
       '/VizualizaceKancelare/IMG_9141_opt.webp',
-      '/VizualizaceKancelare/Zasedací místnost_opt.webp'
+      '/VizualizaceKancelare/zasedaci_mistnost_opt.webp'
     ],
     heightClass: 'aspect-[4/5]',
     description: 'Hory, dřevo a zeleň. Kancelář navržená tak, aby se v ní dobře pracovalo i přemýšlelo.',
@@ -234,10 +234,10 @@ export const PROJECTS: ProjectItem[] = [
     title: 'Rezidence Horská, Litvínov',
     location: 'Litvínov, ČR',
     category: 'Exteriér',
-    imageUrl: '/RezidenceHorska/Vizualizace Exteriéru_opt.webp',
+    imageUrl: '/RezidenceHorska/vizualizace_exterieru_opt.webp',
     galleryUrls: [
-      '/RezidenceHorska/Vizualizace Exteriéru_opt.webp',
-      '/RezidenceHorska/Vizualizace Exteriér - Podvečer_opt.webp',
+      '/RezidenceHorska/vizualizace_exterieru_opt.webp',
+      '/RezidenceHorska/vizualizace_exterier_podvecer_opt.webp',
       '/RezidenceHorska/Image7_opt.webp',
       '/RezidenceHorska/Image8_opt.webp'
     ],
@@ -256,7 +256,7 @@ export const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: "/HeroSection/Generated Image April 23, 2026 - 3_29AM_opt.webp",
+    image: "/HeroSection/hero_slide_2_opt.webp",
     title: "Developerské Projekty",
     location: "Praha, ČR",
     status: "Ve výstavbě"

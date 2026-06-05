@@ -96,9 +96,9 @@ async function startServer() {
     
     // Serve root asset directories dynamically in production
     const rootDirs = [
-      "2DPudorysy", "3DPudorys", "Banner", "Bludovice", "Exteriér",
+      "2DPudorysy", "3DPudorys", "Banner", "Bludovice", "Exterier",
       "HeroSection", "Lipence", "RezidenceHorska", "VizualizaceBludovice",
-      "VizualizaceExterieru na prazdnem pozemku", "VizualizaceExterieruSkorkov",
+      "VizualizaceExterieruNaPrazdnemPozemku", "VizualizaceExterieruSkorkov",
       "VizualizaceExterieruTran", "VizualizaceInterieru3", "VizualizaceKancelare",
       "components"
     ];
