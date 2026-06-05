@@ -14,6 +14,8 @@ const copyRootFoldersPlugin = () => {
         'Banner',
         'Bludovice',
         'Exterier',
+        'Exteriér',
+        'exterier',
         'HeroSection',
         'Lipence',
         'RezidenceHorska',
@@ -53,6 +55,13 @@ const copyRootFoldersPlugin = () => {
           console.log(`[Vite Build Plugin] Copying root folder "${folder}" to dist/`);
           const destPath = path.resolve(outDir, folder);
           copyDirRecursiveSync(rootPath, destPath);
+
+          // If the folder is any variation of Exterier/Exteriér/exterier, duplicate for Netlify path safety
+          if (folder.toLowerCase().includes('exterier') || folder.includes('Exteriér')) {
+            copyDirRecursiveSync(rootPath, path.resolve(outDir, 'Exterier'));
+            copyDirRecursiveSync(rootPath, path.resolve(outDir, 'Exteriér'));
+            copyDirRecursiveSync(rootPath, path.resolve(outDir, 'exterier'));
+          }
         }
 
         // Try copying from public if it exists there
@@ -61,6 +70,13 @@ const copyRootFoldersPlugin = () => {
           console.log(`[Vite Build Plugin] Copying public folder "${folder}" to dist/`);
           const destPath = path.resolve(outDir, folder);
           copyDirRecursiveSync(publicPath, destPath);
+
+          // If the folder is any variation of Exterier/Exteriér/exterier, duplicate for Netlify path safety
+          if (folder.toLowerCase().includes('exterier') || folder.includes('Exteriér')) {
+            copyDirRecursiveSync(publicPath, path.resolve(outDir, 'Exterier'));
+            copyDirRecursiveSync(publicPath, path.resolve(outDir, 'Exteriér'));
+            copyDirRecursiveSync(publicPath, path.resolve(outDir, 'exterier'));
+          }
         }
       }
 
