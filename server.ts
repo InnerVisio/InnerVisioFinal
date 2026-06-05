@@ -93,18 +93,6 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    
-    // Serve root asset directories dynamically in production
-    const rootDirs = [
-      "2DPudorysy", "3DPudorys", "Banner", "Bludovice", "Exterier",
-      "HeroSection", "Lipence", "RezidenceHorska", "VizualizaceBludovice",
-      "VizualizaceExterieruNaPrazdnemPozemku", "VizualizaceExterieruSkorkov",
-      "VizualizaceExterieruTran", "VizualizaceInterieru3", "VizualizaceKancelare",
-      "components"
-    ];
-    rootDirs.forEach(dir => {
-      app.use(`/${dir}`, express.static(path.join(process.cwd(), dir)));
-    });
 
     app.get("*all", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
