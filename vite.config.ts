@@ -80,8 +80,8 @@ const copyRootFoldersPlugin = () => {
         }
       }
 
-      // Also handle FavIcon.png, InnerUvod.png, robots.txt, sitemap.xml
-      const filesToCopy = ['FavIcon.png', 'InnerUvod.png', 'robots.txt', 'sitemap.xml'];
+      // Also handle FavIcon.png, InnerUvod.png, robots.txt, sitemap.xml, 101-Exterier.jpg
+      const filesToCopy = ['FavIcon.png', 'InnerUvod.png', 'robots.txt', 'sitemap.xml', '101-Exterier.jpg'];
       for (const file of filesToCopy) {
         const rootFilePath = path.resolve(process.cwd(), file);
         if (fs.existsSync(rootFilePath)) {
