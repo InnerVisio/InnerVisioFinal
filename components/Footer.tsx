@@ -24,8 +24,14 @@ export const Footer: React.FC = () => {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to subscribe');
+        let textMsg = 'Přihlášení k odběru selhalo';
+        try {
+          const data = await response.json();
+          textMsg = data.error || textMsg;
+        } catch (e) {
+          textMsg = `Chyba serveru (${response.status}): Odezva nebyla ve formátu JSON. Zkontrolujte, zda jste nasadili Netlify funkce a nastavili správně RESEND_API_KEY.`;
+        }
+        throw new Error(textMsg);
       }
 
       setStatus('success');

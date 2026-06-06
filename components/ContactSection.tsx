@@ -44,8 +44,14 @@ export const ContactSection: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send email');
+        let errorMessage = 'Odeslání zprávy selhalo';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Chyba serveru (${response.status}): Odezva nebyla ve formátu JSON. Zkontrolujte, zda jste nasadili Netlify funkce a nastavili správně RESEND_API_KEY.`;
+        }
+        throw new Error(errorMessage);
       }
       
       setIsSubmitted(true);
