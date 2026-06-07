@@ -8,6 +8,7 @@ import { PricingSection } from './components/PricingSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { CookieBanner } from './components/CookieBanner';
+import { UnsubscribeView } from './components/UnsubscribeView';
 import { HERO_SLIDES } from './constants';
 import { Copy, Check, ArrowLeft } from 'lucide-react';
 
@@ -22,6 +23,13 @@ function App() {
     pathname === '/101-Exterier' || 
     pathname === '/email-image' || 
     pathname === '/email/101-exterier';
+
+  // Route matching for unsubscribe page
+  const isUnsubscribeRoute = 
+    pathname === '/unsubscribe' || 
+    pathname === '/odhlasit' || 
+    pathname === '/odhlasit-se' || 
+    pathname === '/email/unsubscribe';
 
   // Toggle for copying feedback
   const [copiedHtml, setCopiedHtml] = useState(false);
@@ -55,7 +63,7 @@ function App() {
 
   // Set noindex dynamically for privacy & avoiding search crawlers on email asset page
   useEffect(() => {
-    if (isEmailImageRoute) {
+    if (isEmailImageRoute || isUnsubscribeRoute) {
       let metaIndex = document.querySelector('meta[name="robots"]');
       if (!metaIndex) {
         metaIndex = document.createElement('meta');
@@ -64,7 +72,7 @@ function App() {
       }
       metaIndex.setAttribute('content', 'noindex, nofollow, noarchive');
     }
-  }, [isEmailImageRoute]);
+  }, [isEmailImageRoute, isUnsubscribeRoute]);
 
   // Smooth out the raw scroll value using a spring
   const smoothY = useSpring(scrollY, {
@@ -175,6 +183,20 @@ function App() {
 
         </div>
       </div>
+    );
+  }
+
+  if (isUnsubscribeRoute) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const emailParam = searchParams.get('email') || '';
+    return (
+      <UnsubscribeView 
+        emailParam={emailParam} 
+        onGoBack={() => {
+          window.history.pushState({}, '', '/');
+          setPathname('/');
+        }} 
+      />
     );
   }
 
