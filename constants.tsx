@@ -5,6 +5,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Služby', href: '#services' },
   { label: 'Práce', href: '#work' },
   { label: 'Ceník', href: '#pricing' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 export const STATS: StatItem[] = [

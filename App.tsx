@@ -5,6 +5,7 @@ import { Hero } from './components/Hero';
 import { ServiceGrid } from './components/ServiceGrid';
 import { PortfolioGallery } from './components/PortfolioGallery';
 import { PricingSection } from './components/PricingSection';
+import { FaqSection } from './components/FaqSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { CookieBanner } from './components/CookieBanner';
@@ -255,6 +256,10 @@ function App() {
         
         <div className="min-h-screen md:min-h-0">
           <PricingSection />
+        </div>
+
+        <div className="min-h-screen md:min-h-0">
+          <FaqSection />
         </div>
         
         <div className="min-h-screen md:min-h-0">

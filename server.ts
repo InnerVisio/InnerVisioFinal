@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import { Resend } from "resend";
 import path from "path";
 import cors from "cors";
+import fs from "fs";
 
 async function startServer() {
   const app = express();
@@ -82,6 +83,38 @@ async function startServer() {
       });
     }
   });
+
+  // Serve static asset folders from the workspace root during development
+  if (process.env.NODE_ENV !== "production") {
+    const assetFolders = [
+      '2DPudorysy',
+      '3DPudorys',
+      'Banner',
+      'Bludovice',
+      'Exteriér',
+      'HeroSection',
+      'Lipence',
+      'RezidenceHorska',
+      'VizualizaceBludovice',
+      'VizualizaceExterieruSkorkov',
+      'VizualizaceExterieruTran',
+      'VizualizaceInterieru3',
+      'VizualizaceKancelare'
+    ];
+
+    for (const folder of assetFolders) {
+      const folderPath = path.resolve(process.cwd(), folder);
+      if (fs.existsSync(folderPath)) {
+        app.use(`/${folder}`, express.static(folderPath));
+        
+        // Handle case and diacritic variations specifically for Exterier / Exteriér
+        if (folder === 'Exteriér') {
+          app.use('/Exterier', express.static(folderPath));
+          app.use('/exterier', express.static(folderPath));
+        }
+      }
+    }
+  }
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

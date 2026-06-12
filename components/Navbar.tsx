@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { NAV_ITEMS } from '../constants';
+import { useLanguage } from './LanguageContext';
+
+const LOCALIZED_NAV_ITEMS = [
+  { labelKey: 'servicesLabel', href: '#services' },
+  { labelKey: 'workLabel', href: '#work' },
+  { labelKey: 'pricingLabel', href: '#pricing' },
+  { labelKey: 'faqLabel', href: '#faq' },
+];
 
 const navContainerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -24,6 +31,7 @@ const navItemVariants: Variants = {
 };
 
 export const Navbar: React.FC = () => {
+  const { language, setLanguage, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
@@ -37,7 +45,7 @@ export const Navbar: React.FC = () => {
           setIsScrolled(window.scrollY > 20);
 
           // Simple scroll spy logic
-          const sections = NAV_ITEMS.map(item => item.href.substring(1));
+          const sections = LOCALIZED_NAV_ITEMS.map(item => item.href.substring(1));
           let current = '';
           for (const section of sections) {
             const element = document.getElementById(section);
@@ -62,10 +70,10 @@ export const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50">
+    <nav className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
       {/* Optimized Background Layer */}
       <div 
-        className={`absolute inset-0 bg-[#050205]/90 backdrop-blur-lg border-b border-white/5 shadow-2xl transition-opacity duration-300 pointer-events-none ${
+        className={`absolute inset-0 bg-[#050205]/95 backdrop-blur-lg border-b border-white/5 shadow-2xl transition-opacity duration-300 pointer-events-none ${
           isScrolled ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -73,10 +81,10 @@ export const Navbar: React.FC = () => {
       <div className={`relative max-w-7xl mx-auto px-4 md:px-8 transition-all duration-300 ${isScrolled ? 'py-3' : 'py-5 md:py-8'}`}>
         <div className="flex items-center justify-between w-full">
           {/* Logo & Greeting Style Container */}
-          <a href="#root" className="flex items-center gap-3 group/logo shrink-0 z-50">
+          <a href="#root" aria-label="Home" className="flex items-center gap-3 group/logo shrink-0 z-50">
             <div className="w-12 md:w-14 h-12 md:h-14 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
               <img 
-                src="https://innervisio.cz/wp-content/uploads/2026/01/Kreslici-platno-11920x1080-bila.png" 
+                src="/FavIcon.png" 
                 alt="InnerVisio Logo" 
                 className="w-full h-full object-contain"
                 referrerPolicy="no-referrer"
@@ -84,10 +92,10 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-lg md:text-xl font-display font-medium text-white leading-tight">
-                InnerVisio
+                {t('footerTitle')}
               </span>
               <span className="text-xs text-gray-400 font-medium leading-tight">
-                Architecture
+                {t('logoSub')}
               </span>
             </div>
           </a>
@@ -99,11 +107,11 @@ export const Navbar: React.FC = () => {
             initial="hidden"
             animate="visible"
           >
-            {NAV_ITEMS.map((item) => {
+            {LOCALIZED_NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.href.substring(1);
               return (
                 <motion.a
-                  key={item.label}
+                  key={item.labelKey}
                   href={item.href}
                   variants={navItemVariants}
                   className={`px-5 py-2.5 rounded-full text-sm transition-all duration-300 font-medium ${
@@ -112,31 +120,73 @@ export const Navbar: React.FC = () => {
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </motion.a>
               );
             })}
           </motion.div>
 
-          {/* Desktop Call to Action & Icons */}
-          <div className="hidden md:flex items-center gap-4 shrink-0">
+          {/* Desktop Call to Action & Language selector */}
+          <div className="hidden md:flex items-center gap-5 shrink-0">
+            {/* Language switcher capsule */}
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5">
+              <button 
+                onClick={() => setLanguage('cs')} 
+                aria-label="Language: Čeština"
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
+                  language === 'cs' 
+                    ? 'bg-secondary text-white shadow-[0_2px_10px_rgba(101,36,111,0.4)] scale-105' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="Čeština"
+              >
+                CS
+              </button>
+              <button 
+                onClick={() => setLanguage('en')} 
+                aria-label="Language: English"
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
+                  language === 'en' 
+                    ? 'bg-secondary text-white shadow-[0_2px_10px_rgba(101,36,111,0.4)] scale-105' 
+                    : 'text-gray-400 hover:text-white'
+                }`}
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+
             <motion.a 
               href="#contact"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-gray-200 transition-colors shadow-lg"
             >
-              Zahájit projekt
+              {t('startProject')}
             </motion.a>
           </div>
 
           {/* Mobile Toggle */}
-          <button 
-            className="md:hidden relative z-50 text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-3 md:hidden relative z-50">
+            {/* Minimal Mobile Lang Select */}
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5">
+              <button 
+                onClick={() => setLanguage(language === 'cs' ? 'en' : 'cs')}
+                aria-label="Switch language"
+                className="px-2.5 py-1 rounded-full text-xs font-bold uppercase text-white bg-secondary/80 transition-all hover:bg-secondary"
+              >
+                {language === 'cs' ? 'CS' : 'EN'}
+              </button>
+            </div>
+
+            <button 
+              className="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Content */}
@@ -147,13 +197,13 @@ export const Navbar: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden absolute top-full left-0 right-0 bg-[#050205] border-b border-white/10 shadow-2xl p-4 flex flex-col gap-2"
+              className="md:hidden absolute top-full left-0 right-0 bg-[#050205] border-b border-white/10 shadow-2xl p-5 flex flex-col gap-2"
             >
-              {NAV_ITEMS.map((item) => {
+              {LOCALIZED_NAV_ITEMS.map((item) => {
                 const isActive = activeSection === item.href.substring(1);
                 return (
                   <a
-                    key={item.label}
+                    key={item.labelKey}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`text-lg font-display px-4 py-3 rounded-xl transition-colors ${
@@ -162,16 +212,42 @@ export const Navbar: React.FC = () => {
                         : 'text-gray-400 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </a>
                 );
               })}
+
+              <div className="h-px bg-white/5 my-2" />
+
+              {/* Mobile Language buttons */}
+              <div className="flex items-center justify-between px-4 py-2">
+                <span className="text-xs text-gray-400 font-medium">Language / Jazyk</span>
+                <div className="flex items-center bg-white/5 border border-white/10 rounded-lg p-0.5">
+                  <button 
+                    onClick={() => setLanguage('cs')} 
+                    className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                      language === 'cs' ? 'bg-secondary text-white' : 'text-gray-400'
+                    }`}
+                  >
+                    Čeština
+                  </button>
+                  <button 
+                    onClick={() => setLanguage('en')} 
+                    className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                      language === 'en' ? 'bg-secondary text-white' : 'text-gray-400'
+                    }`}
+                  >
+                    English
+                  </button>
+                </div>
+              </div>
+
               <a 
                 href="#contact"
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-4 mx-2 px-6 py-3.5 rounded-xl bg-white text-black font-semibold text-center hover:bg-gray-200 transition-colors"
+                className="mt-4 px-6 py-3.5 rounded-xl bg-white text-black font-semibold text-center hover:bg-gray-200 transition-colors"
               >
-                Zahájit projekt
+                {t('startProject')}
               </a>
             </motion.div>
           )}

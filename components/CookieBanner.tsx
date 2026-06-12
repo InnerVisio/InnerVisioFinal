@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Check, X } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
+import { useLanguage } from './LanguageContext';
 
 export function CookieBanner() {
+  const { language, t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -59,18 +61,24 @@ export function CookieBanner() {
             <div className="bg-[#0a050a]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
               
               <div className="flex-1 space-y-3">
-                <h3 className="text-xl font-display font-semibold text-white">Ochrana soukromí a soubory cookie</h3>
-                <p className="text-sm md:text-base text-gray-400 max-w-3xl leading-relaxed">
-                  Tento web využívá soubory cookie k zajištění základních funkcí (nezbytné cookies) a k analýze návštěvnosti a vylepšování obsahu (volitelné cookies). Můžete přijmout všechny cookies, nebo si přizpůsobit nastavení.
+                <h3 className="text-xl font-display font-semibold text-white">
+                  {language === 'cs' ? 'Ochrana soukromí a soubory cookie' : 'Privacy Protection and Cookies'}
+                </h3>
+                <p className="text-sm md:text-base text-gray-400 max-w-3xl leading-relaxed font-light">
+                  {language === 'cs' 
+                    ? 'Tento web využívá soubory cookie k zajištění základních funkcí (nezbytné cookies) a k analýze návštěvnosti a vylepšování obsahu (volitelné cookies). Můžete přijmout všechny cookies, nebo si přizpůsobit nastavení.'
+                    : 'This website utilizes cookies to enable key foundational features (necessary cookies) and analyze aggregate web metrics and user paths (optional cookies). You can opt to agree to all or refine selections.'}
                 </p>
                 
                 {/* Settings Toggle Button */}
                 <button 
                   onClick={() => setShowSettings(!showSettings)}
-                  className="flex items-center gap-2 text-sm text-primary hover:text-white transition-colors pt-2"
+                  className="flex items-center gap-2 text-sm text-primary hover:text-white transition-colors pt-2 font-medium"
                 >
                   <Settings className="w-4 h-4" />
-                  {showSettings ? 'Skrýt nastavení' : 'Přizpůsobit nastavení cookies'}
+                  {showSettings 
+                    ? (language === 'cs' ? 'Skrýt nastavení' : 'Hide settings') 
+                    : (language === 'cs' ? 'Přizpůsobit nastavení cookies' : 'Refine cookie settings')}
                 </button>
 
                 {/* Expanded Settings */}
@@ -86,19 +94,27 @@ export function CookieBanner() {
                         {/* Necessary */}
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium text-sm">Nezbytné cookies</p>
-                            <p className="text-xs text-gray-500">Nutné pro správné fungování webu. Nelze je vypnout.</p>
+                            <p className="text-white font-medium text-sm">
+                              {language === 'cs' ? 'Nezbytné cookies' : 'Necessary Cookies'}
+                            </p>
+                            <p className="text-xs text-gray-500 font-light">
+                              {language === 'cs' ? 'Nutné pro správné fungování webu. Nelze je vypnout.' : 'Required for core website mechanics and security. Cannot be switched off.'}
+                            </p>
                           </div>
-                          <div className="bg-primary/20 text-primary p-1 rounded-full px-3 text-xs border border-primary/30">
-                            Vždy zapnuto
+                          <div className="bg-primary/20 text-primary p-1 rounded-full px-3 text-xs border border-primary/30 font-display">
+                            {language === 'cs' ? 'Vždy zapnuto' : 'Always Active'}
                           </div>
                         </div>
                         
                         {/* Analytics */}
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium text-sm">Analytické cookies</p>
-                            <p className="text-xs text-gray-500">Pomáhají nám vylepšovat web podle toho, jak ho používáte.</p>
+                            <p className="text-white font-medium text-sm">
+                              {language === 'cs' ? 'Analytické cookies' : 'Analytics Cookies'}
+                            </p>
+                            <p className="text-xs text-gray-500 font-light">
+                              {language === 'cs' ? 'Pomáhají nám vylepšovat web podle toho, jak ho používáte.' : 'Allows us to assess dynamic path metrics to refine web experiences.'}
+                            </p>
                           </div>
                           <button 
                             onClick={() => setPreferences(p => ({ ...p, analytics: !p.analytics }))}
@@ -111,8 +127,12 @@ export function CookieBanner() {
                         {/* Marketing */}
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white font-medium text-sm">Marketingové cookies</p>
-                            <p className="text-xs text-gray-500">Používají se pro personalizaci reklam a obsahu.</p>
+                            <p className="text-white font-medium text-sm">
+                              {language === 'cs' ? 'Marketingové cookies' : 'Marketing Cookies'}
+                            </p>
+                            <p className="text-xs text-gray-500 font-light">
+                              {language === 'cs' ? 'Používají se pro personalizaci reklam a obsahu.' : 'Used to build preference scores or serve personalized content.'}
+                            </p>
                           </div>
                           <button 
                             onClick={() => setPreferences(p => ({ ...p, marketing: !p.marketing }))}
@@ -127,35 +147,35 @@ export function CookieBanner() {
                 </AnimatePresence>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 mt-4 md:mt-0">
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 mt-4 md:mt-0 font-display text-sm font-semibold">
                 {!showSettings ? (
                   <>
                     <button 
                       onClick={handleDeclineAll}
-                      className="px-6 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors font-medium text-sm w-full sm:w-auto text-center"
+                      className="px-6 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors w-full sm:w-auto text-center"
                     >
-                      Odmítnout volitelné
+                      {language === 'cs' ? 'Odmítnout volitelné' : 'Decline optional'}
                     </button>
                     <button 
                       onClick={handleAcceptAll}
-                      className="px-8 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors font-medium text-sm shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
+                      className="px-8 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
                     >
-                      Přijmout vše
+                      {language === 'cs' ? 'Přijmout vše' : 'Accept all'}
                     </button>
                   </>
                 ) : (
                   <>
                     <button 
                       onClick={handleDeclineAll}
-                      className="px-4 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors font-medium text-sm w-full sm:w-auto text-center"
+                      className="px-4 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors w-full sm:w-auto text-center"
                     >
-                      Odmítnout volitelné
+                      {language === 'cs' ? 'Odmítnout volitelné' : 'Decline optional'}
                     </button>
                     <button 
                       onClick={handleAcceptSelected}
-                      className="px-6 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors font-medium text-sm shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
+                      className="px-6 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
                     >
-                      Potvrdit výběr
+                      {language === 'cs' ? 'Potvrdit výběr' : 'Confirm choices'}
                     </button>
                   </>
                 )}
@@ -165,7 +185,7 @@ export function CookieBanner() {
               <button 
                 onClick={handleDeclineAll}
                 className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors md:hidden"
-                aria-label="Zavřít"
+                aria-label={language === 'cs' ? 'Zavřít' : 'Close'}
               >
                 <X className="w-5 h-5" />
               </button>

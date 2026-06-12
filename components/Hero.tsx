@@ -1,14 +1,22 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { HERO_SLIDES, STATS } from '../constants';
+import { useLanguage } from './LanguageContext';
+import { HERO_SLIDES } from '../constants';
 
 interface HeroProps {
   currentSlide: number;
   setCurrentSlide: (index: number) => void;
 }
 
+const LOCALIZED_STATS = [
+  { value: '150+', labelKey: 'statsProjects' },
+  { value: '50+', labelKey: 'statsSatisfied' },
+  { value: '24h', labelKey: 'statsResponse' }
+];
+
 export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => {
+  const { t } = useLanguage();
 
   const handleDotClick = (index: number) => {
     setCurrentSlide(index);
@@ -33,15 +41,15 @@ export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => 
                 transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
                 className="block"
               >
-                Navrhujeme
+                {t('heroTitle1')}
               </motion.span>
               <motion.span 
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
-                className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-300"
+                className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-purple-300 animate-pulse"
               >
-                Nepředstavitelné
+                {t('heroTitle2')}
               </motion.span>
             </h1>
           </motion.div>
@@ -52,7 +60,7 @@ export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => 
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-base md:text-lg text-gray-300 max-w-md font-light leading-relaxed mt-6"
           >
-            Přinášíme prezentaci nemovitostí na nové úrovni. Zvyšte svou úroveň prezentace skrze světlo, emoce a profesionální vizuál.
+            {t('heroSub')}
           </motion.p>
 
           <motion.div 
@@ -61,17 +69,17 @@ export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => 
             transition={{ duration: 0.8, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 md:gap-6 mt-10"
           >
-            <a href="#work" className="group relative px-8 py-4 bg-white text-black rounded-full font-bold flex items-center justify-center gap-3 overflow-hidden">
+            <a href="#work" aria-label={t('heroExploreBtn')} className="group relative px-8 py-4 bg-white text-black rounded-full font-bold flex items-center justify-center gap-3 overflow-hidden">
               <div className="absolute inset-0 bg-purple-100 transform scale-x-0 md:group-hover:scale-x-100 transition-transform origin-left duration-300" />
-              <span className="relative z-10">Prozkoumat portfolio</span>
+              <span className="relative z-10">{t('heroExploreBtn')}</span>
               <ArrowRight className="relative z-10 w-4 h-4 md:group-hover:translate-x-1 transition-transform" />
             </a>
             
-            <a href="#contact" className="flex items-center justify-center sm:justify-start gap-3 text-white md:hover:text-purple-300 transition-colors group py-2">
+            <a href="#contact" aria-label={t('heroContactBtn')} className="flex items-center justify-center sm:justify-start gap-3 text-white md:hover:text-purple-300 transition-colors group py-2">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/20 flex items-center justify-center md:group-hover:border-secondary md:group-hover:bg-secondary/20 transition-all">
                 <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
               </div>
-              <span className="text-sm font-medium tracking-wide">Kontaktovat studio</span>
+              <span className="text-sm font-medium tracking-wide">{t('heroContactBtn')}</span>
             </a>
           </motion.div>
 
@@ -90,17 +98,17 @@ export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => 
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                     </span>
-                    <span className="text-sm md:text-base font-medium text-white">Máme prostor pro nové zakázky</span>
+                    <span className="text-sm md:text-base font-medium text-white">{t('infoNewProjects')}</span>
                   </div>
                   <div className="w-full h-px bg-white/10 my-1"></div>
                   <div className="flex items-center gap-3">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                    <span className="text-sm md:text-base font-medium text-white">Rychlá doba dodání</span>
+                    <span className="text-sm md:text-base font-medium text-white">{t('infoFastDelivery')}</span>
                   </div>
                   <div className="w-full h-px bg-white/10 my-1"></div>
                   <div className="flex items-center gap-3">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                    <span className="text-sm md:text-base font-medium text-white">Moderní prezentace</span>
+                    <span className="text-sm md:text-base font-medium text-white">{t('infoModernPres')}</span>
                   </div>
                 </div>
               </div>
@@ -114,10 +122,10 @@ export const Hero: React.FC<HeroProps> = ({ currentSlide, setCurrentSlide }) => 
             transition={{ duration: 1, delay: 0.6 }}
             className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 pt-8 border-t border-white/10 mt-10 md:mt-12 max-w-xl"
           >
-            {STATS.map((stat, idx) => (
-              <div key={stat.label} className={idx === 2 ? "col-span-2 sm:col-span-1" : ""}>
-                <h4 className="text-xl md:text-3xl font-display font-bold text-white mb-1">{stat.value}</h4>
-                <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">{stat.label}</p>
+            {LOCALIZED_STATS.map((stat, idx) => (
+              <div key={stat.labelKey} className={idx === 2 ? "col-span-2 sm:col-span-1" : ""}>
+                <div className="text-xl md:text-3xl font-display font-bold text-white mb-1">{stat.value}</div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{t(stat.labelKey)}</p>
               </div>
             ))}
           </motion.div>
