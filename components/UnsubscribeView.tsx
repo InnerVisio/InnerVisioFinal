@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Check, AlertCircle } from 'lucide-react';
+import { BRAND, blurInOnMount } from './ui/brand';
 
 interface UnsubscribeViewProps {
   emailParam: string;
@@ -50,63 +52,91 @@ export function UnsubscribeView({ emailParam, onGoBack }: UnsubscribeViewProps) 
   };
 
   return (
-    <div className="min-h-screen bg-[#070408] text-white flex flex-col items-center justify-center p-4 sm:p-8 font-sans selection:bg-primary/35 selection:text-white relative overflow-hidden">
-      {/* Background glow effects to match InnerVisio design styling */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-background text-ink flex flex-col items-center justify-center px-4 py-10 sm:p-8 font-sans relative overflow-hidden">
+      {/* Plum glows: the glass card needs something to refract */}
+      {/* Centered with flex because the drift animation owns `transform` */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center" aria-hidden>
+        <div className="w-[680px] h-[680px] shrink-0 rounded-full glow-plum opacity-90 animate-drift-slow" />
+      </div>
+      <div className="absolute inset-0 pointer-events-none flex items-end justify-end" aria-hidden>
+        <div className="w-[460px] h-[460px] shrink-0 -mr-40 -mb-40 rounded-full glow-orchid opacity-40" />
+      </div>
 
-      <div className="max-w-md w-full bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl relative flex flex-col gap-6 z-10 transition-all duration-300">
-        
-        {/* Header with subtle minimal styling */}
-        <div className="flex flex-col items-center text-center pb-4 border-b border-white/10">
-          <span className="text-sm font-semibold tracking-[0.15em] uppercase text-primary mb-2">InnerVisio</span>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-            Odhlášení z newsletteru
+      {/* Logo */}
+      <motion.button
+        {...blurInOnMount(0)}
+        type="button"
+        onClick={onGoBack}
+        className="focus-ring relative z-10 inline-flex items-center gap-3 mb-8 rounded-2xl"
+        aria-label="InnerVisio – zpět na hlavní stránku"
+      >
+        <span className="bg-logo-plum w-11 h-11 rounded-2xl flex items-center justify-center border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.45)]">
+          <img src="/FavIcon.png" alt="" className="w-7 h-7 object-contain" width={28} height={28} />
+        </span>
+        <span className="text-2xl font-display font-bold tracking-tightest text-ink">InnerVisio</span>
+      </motion.button>
+
+      <motion.div
+        {...blurInOnMount(0.1)}
+        className="glass-strong glass-inner-glow max-w-md w-full rounded-card-lg p-6 sm:p-9 relative flex flex-col gap-7 z-10"
+      >
+
+        <div className="flex flex-col items-center text-center pb-6 border-b border-white/[0.08]">
+          <span className="eyebrow mb-3">Newsletter</span>
+          <h1 className="text-[26px] sm:text-3xl font-display font-bold tracking-tightest leading-tight text-ink">
+            Odhlášení z <span className="text-gradient">newsletteru</span>
           </h1>
-          <p className="text-xs sm:text-sm text-gray-400 mt-2">
+          <p className="text-sm text-ink-2 mt-3 font-light leading-relaxed">
             Je nám líto, že odcházíte. Po potvrzení Vám již nebudeme posílat žádné novinky ani nabídky.
           </p>
         </div>
 
         {status === 'success' ? (
-          <div className="flex flex-col items-center text-center py-4 gap-4 animate-fadeIn">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-              <Check className="w-8 h-8" />
-            </div>
-            <h2 className="text-lg font-semibold text-white">Úspěšně odhlášeno</h2>
-            <p className="text-sm text-gray-400">
-              E-mailová adresa <span className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded">{email}</span> byla úspěšně odebrána z našeho seznamu příjemců.
+          <motion.div
+            role="status"
+            initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center text-center py-2 gap-4"
+          >
+            <span className="icon-chip w-16 h-16 rounded-[20px] mb-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_40px_rgba(162,77,184,0.45)]">
+              <Check className="w-8 h-8 icon-gradient" strokeWidth={1.5} />
+            </span>
+            <h2 className="text-xl font-display font-semibold tracking-tightest text-ink">Úspěšně odhlášeno</h2>
+            <p className="text-sm text-ink-2 font-light leading-relaxed break-words">
+              E-mailová adresa <span className="text-orchid-soft font-medium bg-white/[0.07] border border-white/10 px-2 py-0.5 rounded-lg break-all">{email}</span> byla úspěšně odebrána z našeho seznamu příjemců.
             </p>
             <button
+              type="button"
               onClick={onGoBack}
-              className="mt-4 flex items-center gap-2 text-xs sm:text-sm text-gray-400 hover:text-white transition group"
+              className={`${BRAND.btnGlass} group mt-3 px-5 py-2.5 text-sm`}
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="w-4 h-4 transition-transform duration-500 md:group-hover:-translate-x-0.5" strokeWidth={1.75} />
               Zpět na hlavní stránku
             </button>
-          </div>
+          </motion.div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-gray-300">
+              <label htmlFor="email" className="text-sm font-medium text-ink-2">
                 Vaše e-mailová adresa
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  disabled={status === 'loading'}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jmeno@priklad.cz"
-                  className="w-full bg-white/5 border border-white/11 rounded-lg py-3 px-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition duration-200"
-                  required
-                />
-              </div>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                disabled={status === 'loading'}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jmeno@priklad.cz"
+                autoComplete="email"
+                className="w-full rounded-2xl bg-white/[0.05] border border-white/[0.14] px-4 py-3.5 text-[15px] text-ink placeholder:text-ink-3 font-light shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[background-color,border-color,box-shadow] duration-300 outline-none md:hover:border-white/25 focus-visible:border-orchid-soft/70 focus-visible:bg-white/[0.08] focus-visible:shadow-[0_0_0_3px_rgba(196,139,224,0.28)] disabled:opacity-60"
+                required
+              />
             </div>
 
             {status === 'error' && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg p-3 text-xs flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div role="alert" className="bg-rose/[0.08] border border-rose/25 text-rose rounded-2xl p-3.5 text-sm flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -114,11 +144,11 @@ export function UnsubscribeView({ emailParam, onGoBack }: UnsubscribeViewProps) 
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg py-3 text-sm font-semibold tracking-wide transition shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className={`${BRAND.btnPrimary} w-full py-3.5 text-[15px] disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {status === 'loading' ? (
                 <>
-                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden>
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -132,13 +162,18 @@ export function UnsubscribeView({ emailParam, onGoBack }: UnsubscribeViewProps) 
             <button
               type="button"
               onClick={onGoBack}
-              className="text-xs text-gray-500 hover:text-gray-300 text-center transition py-1 underline underline-offset-4"
+              className="focus-ring self-center rounded text-sm text-ink-3 md:hover:text-orchid-pink text-center transition-colors py-1 underline underline-offset-4 decoration-white/20"
             >
               Možná jindy, vzít zpět
             </button>
           </form>
         )}
-      </div>
+      </motion.div>
+
+      {/* Contact always visible */}
+      <motion.p {...blurInOnMount(0.2)} className="relative z-10 mt-8 text-sm text-ink-3 font-light text-center">
+        Dotazy? <a href="mailto:innervisio@gmail.com" className="link-orchid focus-ring rounded font-medium">innervisio@gmail.com</a>
+      </motion.p>
     </div>
   );
 }

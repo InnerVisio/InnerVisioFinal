@@ -11,16 +11,8 @@ export interface ServiceItem {
   galleryUrls?: string[];
   detailedDescription?: string;
   features?: string[];
-}
-
-export interface NavItem {
-  label: string;
-  href: string;
-}
-
-export interface StatItem {
-  value: string;
-  label: string;
+  isNew?: boolean;
+  tags?: string[];
 }
 
 export interface ProjectItem {

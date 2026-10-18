@@ -1,193 +1,219 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, Cookie } from 'lucide-react';
 import { useLanguage } from './LanguageContext';
+import { BRAND, EASE_OUT } from './ui/brand';
+import { ConsentPreferences, onOpenCookieSettings, readConsent, saveConsent } from '../analytics';
+
+// Optional categories start switched off: pre-ticked boxes are not valid consent under GDPR
+const NO_OPTIONAL: ConsentPreferences = { analytics: false, marketing: false };
+
+// Plum switch: Orchid Plum when on, faint glass when off
+function ConsentSwitch({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onToggle}
+      className={`focus-ring relative w-12 h-7 shrink-0 rounded-full border transition-[background-color,border-color,box-shadow] duration-500 ${
+        checked
+          ? 'bg-secondary border-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_18px_rgba(162,77,184,0.45)]'
+          : 'bg-white/[0.08] border-white/[0.16] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`absolute top-[3px] left-[3px] w-5 h-5 rounded-full bg-ink shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
 
 export function CookieBanner() {
   const { language, t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Simple state for preferences (in a real app, integrate with a consent manager)
-  const [preferences, setPreferences] = useState({
-    necessary: true, // Always true
-    analytics: true,
-    marketing: false,
-  });
+  const [preferences, setPreferences] = useState<ConsentPreferences>(NO_OPTIONAL);
 
+  // Show the banner only until the visitor has made a choice. No artificial delay: as the largest
+  // text block on a first visit it is the page's LCP element, so every ms of delay counts.
   useEffect(() => {
-    // Check if user has already made a choice
-    const consent = localStorage.getItem('cookie-consent-choice');
-    if (!consent) {
-      // Delay showing banner slightly for better UX
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
+    if (!readConsent()) setIsVisible(true);
   }, []);
 
-  const handleAcceptAll = () => {
-    setPreferences({ necessary: true, analytics: true, marketing: true });
-    saveConsent('all');
-  };
+  // Footer "Nastavení cookies" reopens the banner with the current choices
+  useEffect(() => onOpenCookieSettings(() => {
+    setPreferences(readConsent() ?? NO_OPTIONAL);
+    setShowSettings(true);
+    setIsVisible(true);
+  }), []);
 
-  const handleAcceptSelected = () => {
-    saveConsent('selected');
-  };
-
-  const handleDeclineAll = () => {
-    setPreferences({ necessary: true, analytics: false, marketing: false });
-    saveConsent('necessary-only');
-  };
-
-  const saveConsent = (type: string) => {
-    localStorage.setItem('cookie-consent-choice', type);
-    localStorage.setItem('cookie-consent-preferences', JSON.stringify(preferences));
+  const commit = (prefs: ConsentPreferences) => {
+    setPreferences(prefs);
+    saveConsent(prefs);
     setIsVisible(false);
   };
+
+  const handleAcceptAll = () => commit({ analytics: true, marketing: true });
+  const handleAcceptSelected = () => commit(preferences);
+  const handleDeclineAll = () => commit(NO_OPTIONAL);
+
+  const cs = language === 'cs';
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
+          initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 pointer-events-none"
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ duration: 0.8, ease: EASE_OUT }}
+          className="fixed bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 md:p-6 pointer-events-none"
         >
           <div className="max-w-6xl mx-auto w-full pointer-events-auto">
-            <div className="bg-[#0a050a]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-              
-              <div className="flex-1 space-y-3">
-                <h3 className="text-xl font-display font-semibold text-white">
-                  {language === 'cs' ? 'Ochrana soukromí a soubory cookie' : 'Privacy Protection and Cookies'}
-                </h3>
-                <p className="text-sm md:text-base text-gray-400 max-w-3xl leading-relaxed font-light">
-                  {language === 'cs' 
-                    ? 'Tento web využívá soubory cookie k zajištění základních funkcí (nezbytné cookies) a k analýze návštěvnosti a vylepšování obsahu (volitelné cookies). Můžete přijmout všechny cookies, nebo si přizpůsobit nastavení.'
-                    : 'This website utilizes cookies to enable key foundational features (necessary cookies) and analyze aggregate web metrics and user paths (optional cookies). You can opt to agree to all or refine selections.'}
-                </p>
-                
-                {/* Settings Toggle Button */}
-                <button 
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="flex items-center gap-2 text-sm text-primary hover:text-white transition-colors pt-2 font-medium"
-                >
-                  <Settings className="w-4 h-4" />
-                  {showSettings 
-                    ? (language === 'cs' ? 'Skrýt nastavení' : 'Hide settings') 
-                    : (language === 'cs' ? 'Přizpůsobit nastavení cookies' : 'Refine cookie settings')}
-                </button>
+            <div
+              role="region"
+              aria-label={cs ? 'Nastavení cookies' : 'Cookie settings'}
+              className="relative overflow-hidden rounded-card bg-[rgba(24,12,30,0.86)] backdrop-blur-[28px] backdrop-saturate-150 border-[1.5px] border-white/[0.16] shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_30px_80px_rgba(0,0,0,0.6),0_0_60px_rgba(162,77,184,0.22)] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between"
+            >
+              <div aria-hidden className="absolute inset-0 glass-inner-glow pointer-events-none" />
 
-                {/* Expanded Settings */}
-                <AnimatePresence>
-                  {showSettings && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden pt-4"
-                    >
-                      <div className="space-y-4 border-t border-white/5 pt-4">
-                        {/* Necessary */}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-medium text-sm">
-                              {language === 'cs' ? 'Nezbytné cookies' : 'Necessary Cookies'}
-                            </p>
-                            <p className="text-xs text-gray-500 font-light">
-                              {language === 'cs' ? 'Nutné pro správné fungování webu. Nelze je vypnout.' : 'Required for core website mechanics and security. Cannot be switched off.'}
-                            </p>
-                          </div>
-                          <div className="bg-primary/20 text-primary p-1 rounded-full px-3 text-xs border border-primary/30 font-display">
-                            {language === 'cs' ? 'Vždy zapnuto' : 'Always Active'}
-                          </div>
-                        </div>
-                        
-                        {/* Analytics */}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-medium text-sm">
-                              {language === 'cs' ? 'Analytické cookies' : 'Analytics Cookies'}
-                            </p>
-                            <p className="text-xs text-gray-500 font-light">
-                              {language === 'cs' ? 'Pomáhají nám vylepšovat web podle toho, jak ho používáte.' : 'Allows us to assess dynamic path metrics to refine web experiences.'}
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => setPreferences(p => ({ ...p, analytics: !p.analytics }))}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${preferences.analytics ? 'bg-primary' : 'bg-white/10'}`}
-                          >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${preferences.analytics ? 'left-7' : 'left-1'}`} />
-                          </button>
-                        </div>
+              <div className="relative flex-1 min-w-0 flex gap-4 md:gap-5">
+                <span className={`${BRAND.iconChip} hidden sm:inline-flex`}>
+                  <Cookie className="w-5 h-5 icon-gradient" strokeWidth={1.5} />
+                </span>
 
-                        {/* Marketing */}
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-medium text-sm">
-                              {language === 'cs' ? 'Marketingové cookies' : 'Marketing Cookies'}
-                            </p>
-                            <p className="text-xs text-gray-500 font-light">
-                              {language === 'cs' ? 'Používají se pro personalizaci reklam a obsahu.' : 'Used to build preference scores or serve personalized content.'}
-                            </p>
+                <div className="flex-1 min-w-0 space-y-3">
+                  <h3 className="text-lg md:text-xl font-display font-semibold tracking-tightest text-ink pr-10 md:pr-0">
+                    {cs ? 'Ochrana soukromí a soubory cookie' : 'Privacy Protection and Cookies'}
+                  </h3>
+                  <p className="text-sm md:text-[15px] text-ink-2 max-w-3xl leading-relaxed font-light">
+                    {cs
+                      ? 'Tento web využívá soubory cookie k zajištění základních funkcí (nezbytné cookies) a k analýze návštěvnosti a vylepšování obsahu (volitelné cookies). Můžete přijmout všechny cookies, nebo si přizpůsobit nastavení.'
+                      : 'This website utilizes cookies to enable key foundational features (necessary cookies) and analyze aggregate web metrics and user paths (optional cookies). You can opt to agree to all or refine selections.'}
+                  </p>
+
+                  {/* Settings Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSettings(!showSettings)}
+                    aria-expanded={showSettings}
+                    aria-controls="cookie-settings"
+                    className="link-orchid focus-ring rounded inline-flex items-center gap-2 text-sm pt-1 font-display font-medium"
+                  >
+                    <Settings className="w-4 h-4" strokeWidth={1.75} />
+                    {showSettings
+                      ? (cs ? 'Skrýt nastavení' : 'Hide settings')
+                      : (cs ? 'Přizpůsobit nastavení cookies' : 'Refine cookie settings')}
+                  </button>
+
+                  {/* Expanded Settings */}
+                  <AnimatePresence initial={false}>
+                    {showSettings && (
+                      <motion.div
+                        id="cookie-settings"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.55, ease: EASE_OUT }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-4 border-t border-white/[0.08] mt-2 pt-4 max-h-[40vh] overflow-y-auto custom-scrollbar pr-1">
+                          {/* Necessary */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-ink font-medium text-sm">
+                                {cs ? 'Nezbytné cookies' : 'Necessary Cookies'}
+                              </p>
+                              <p className="text-xs text-ink-3 font-light">
+                                {cs ? 'Nutné pro správné fungování webu. Nelze je vypnout.' : 'Required for core website mechanics and security. Cannot be switched off.'}
+                              </p>
+                            </div>
+                            <span className="shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-display font-medium text-orchid-soft bg-secondary/15 border border-secondary/35">
+                              {cs ? 'Vždy zapnuto' : 'Always Active'}
+                            </span>
                           </div>
-                          <button 
-                            onClick={() => setPreferences(p => ({ ...p, marketing: !p.marketing }))}
-                            className={`w-12 h-6 rounded-full transition-colors relative ${preferences.marketing ? 'bg-primary' : 'bg-white/10'}`}
-                          >
-                            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${preferences.marketing ? 'left-7' : 'left-1'}`} />
-                          </button>
+
+                          {/* Analytics */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-ink font-medium text-sm">
+                                {cs ? 'Analytické cookies' : 'Analytics Cookies'}
+                              </p>
+                              <p className="text-xs text-ink-3 font-light">
+                                {cs ? 'Pomáhají nám vylepšovat web podle toho, jak ho používáte.' : 'Allows us to assess dynamic path metrics to refine web experiences.'}
+                              </p>
+                            </div>
+                            <ConsentSwitch
+                              checked={preferences.analytics}
+                              onToggle={() => setPreferences(p => ({ ...p, analytics: !p.analytics }))}
+                              label={cs ? 'Analytické cookies' : 'Analytics Cookies'}
+                            />
+                          </div>
+
+                          {/* Marketing */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-ink font-medium text-sm">
+                                {cs ? 'Marketingové cookies' : 'Marketing Cookies'}
+                              </p>
+                              <p className="text-xs text-ink-3 font-light">
+                                {cs ? 'Používají se pro personalizaci reklam a obsahu.' : 'Used to build preference scores or serve personalized content.'}
+                              </p>
+                            </div>
+                            <ConsentSwitch
+                              checked={preferences.marketing}
+                              onToggle={() => setPreferences(p => ({ ...p, marketing: !p.marketing }))}
+                              label={cs ? 'Marketingové cookies' : 'Marketing Cookies'}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 mt-4 md:mt-0 font-display text-sm font-semibold">
+              <div className="relative flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 text-sm">
+                <button
+                  type="button"
+                  onClick={handleDeclineAll}
+                  className={`${BRAND.btnGlass} px-6 py-3 w-full sm:w-auto`}
+                >
+                  {cs ? 'Odmítnout volitelné' : 'Decline optional'}
+                </button>
                 {!showSettings ? (
-                  <>
-                    <button 
-                      onClick={handleDeclineAll}
-                      className="px-6 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors w-full sm:w-auto text-center"
-                    >
-                      {language === 'cs' ? 'Odmítnout volitelné' : 'Decline optional'}
-                    </button>
-                    <button 
-                      onClick={handleAcceptAll}
-                      className="px-8 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
-                    >
-                      {language === 'cs' ? 'Přijmout vše' : 'Accept all'}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleAcceptAll}
+                    className={`${BRAND.btnPrimary} px-8 py-3 w-full sm:w-auto`}
+                  >
+                    {cs ? 'Přijmout vše' : 'Accept all'}
+                  </button>
                 ) : (
-                  <>
-                    <button 
-                      onClick={handleDeclineAll}
-                      className="px-4 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition-colors w-full sm:w-auto text-center"
-                    >
-                      {language === 'cs' ? 'Odmítnout volitelné' : 'Decline optional'}
-                    </button>
-                    <button 
-                      onClick={handleAcceptSelected}
-                      className="px-6 py-3 rounded-lg bg-primary hover:bg-secondary text-white transition-colors shadow-[0_0_15px_rgba(56,24,63,0.5)] w-full sm:w-auto text-center"
-                    >
-                      {language === 'cs' ? 'Potvrdit výběr' : 'Confirm choices'}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleAcceptSelected}
+                    className={`${BRAND.btnPrimary} px-7 py-3 w-full sm:w-auto`}
+                  >
+                    {cs ? 'Potvrdit výběr' : 'Confirm choices'}
+                  </button>
                 )}
               </div>
-              
+
               {/* Close Icon (Optional, same as decline) */}
-              <button 
+              <button
+                type="button"
                 onClick={handleDeclineAll}
-                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors md:hidden"
-                aria-label={language === 'cs' ? 'Zavřít' : 'Close'}
+                className="btn-glass focus-ring absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-ink-2 hover:text-ink md:hidden"
+                aria-label={cs ? 'Zavřít' : 'Close'}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" strokeWidth={1.75} />
               </button>
             </div>
           </div>

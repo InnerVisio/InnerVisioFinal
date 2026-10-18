@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Brand manual (large binary, kept outside the repo)
+InnerVisio-Brand-Guidelines-Plum-Keynote.pdf

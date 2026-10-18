@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState, KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard } from './ui/GlassCard';
 import { SERVICES } from '../constants';
 import { ArrowRight, ChevronRight, X, ArrowUpRight } from 'lucide-react';
 import { ServiceItem } from '../types';
 import { useLanguage, Language } from './LanguageContext';
+import { blurInRise, EASE_OUT } from './ui/brand';
 
 const SERVICE_TRANSLATIONS: Record<Language, Record<string, { title: string; description: string; detailedDescription: string; features: string[] }>> = {
   cs: {
@@ -44,6 +44,12 @@ const SERVICE_TRANSLATIONS: Record<Language, Record<string, { title: string; des
        description: 'Komplexní digitální prezentace projektů integrující vizuální obsah do moderního webu.',
        detailedDescription: 'Developerům a realitním kancelářím tvoříme ucelené prezentační webové stránky pro konkrétní stavební projekty s interaktivním výběrem bytů a integrací vizuálního materiálu. Toto je fiktivní projekt pro ukázku funkčnosti, pokud máte zájem o plnohodnotnou stránku s těmito funkcemi, ozvěte se nám.',
        features: ['Interaktivní 2D/3D navigace (klikací budova)', 'Filtrování volných/obsazených bytů', 'Moderní animace a uživatelský UX/UI design', 'SEO optimalizace pro vyhledávače'],
+    },
+    '7': {
+       title: 'AI vizualizace',
+       description: 'Fotorealistické vizualizace z fotky nebo skici do 24 hodin. Ideální pro inzerci a rekonstrukce.',
+       detailedDescription: 'Z fotky z mobilu, skici nebo půdorysu vytvoříme fotorealistickou vizualizaci interiéru či exteriéru do 24 hodin. AI je pro nás nástroj, nápad, materiály a funkčnost dodává člověk. Každý snímek ručně kontrolujeme, aby seděla geometrie, proporce i světlo.',
+       features: ['Hotovo do 24 hodin', '3 stylové varianty v ceně', 'Zachovaná geometrie a proporce prostoru', 'Transparentní označení dle EU AI Act'],
     }
   },
   en: {
@@ -82,18 +88,62 @@ const SERVICE_TRANSLATIONS: Record<Language, Record<string, { title: string; des
        description: 'Premium standalone web portals combining 2D/3D flat selectors with modern real estate design.',
        detailedDescription: 'Custom, high-converting property portfolio web development. Features interactive building floor selection tools, unit availability tables, interactive location map tags and responsive forms. This is a fictional project for demonstration purposes; if you are interested in a full-fledged website with these features, please contact us.',
        features: ['Interactive clicks on building floor layouts', 'Live real-time flat filter systems', 'Ultra-fast loading times & SEO', 'Simplified custom admin dashboard'],
+    },
+    '7': {
+       title: 'AI Visualization',
+       description: 'Photorealistic visualizations from a photo or sketch within 24 hours. Ideal for listings and renovations.',
+       detailedDescription: 'From a phone photo, sketch or floor plan we create a photorealistic interior or exterior visualization within 24 hours. AI is our tool; the idea, materials and function come from people. We check every image by hand so geometry, proportions and light stay right.',
+       features: ['Ready within 24 hours', '3 style variants included', 'Geometry and proportions preserved', 'Transparent labelling under the EU AI Act'],
     }
   }
 };
+
+// Tag labels come from constants in English; show them in the active language
+const TAG_TRANSLATIONS: Record<Language, Record<string, string>> = {
+  cs: { 'Professional': 'Profesionálně', 'Fast Delivery': 'Rychlé dodání', '3 Styles': '3 styly' },
+  en: {},
+};
+const DEFAULT_TAGS = ['Professional', 'Fast Delivery'];
+
+// Headline with exactly one gradient word (the last one), per brand typography rules
+const GradientHeadline: React.FC<{ text: string }> = ({ text }) => {
+  const idx = text.lastIndexOf(' ');
+  if (idx === -1) return <span className="text-gradient">{text}</span>;
+  return (
+    <>
+      {text.slice(0, idx)} <span className="text-gradient">{text.slice(idx + 1)}</span>
+    </>
+  );
+};
+
+// Branded stand-in for services that have no photo yet
+const ServicePlaceholder: React.FC<{ icon: ServiceItem['icon'] }> = ({ icon: Icon }) => (
+  <div className="absolute inset-0 bg-[radial-gradient(90%_80%_at_70%_20%,rgba(196,139,224,0.32)_0%,rgba(91,39,105,0.55)_42%,#1F0F29_100%)] flex items-center justify-center">
+    <div className="absolute w-48 h-48 rounded-full glow-orchid opacity-70" aria-hidden />
+    <Icon className="relative w-16 h-16 icon-gradient" strokeWidth={1} aria-hidden />
+  </div>
+);
+
+const NewBadge: React.FC<{ label: string }> = ({ label }) => (
+  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-white font-display font-semibold text-[10px] uppercase tracking-[0.14em] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_16px_rgba(162,77,184,0.55)]">
+    <span className="w-1 h-1 rounded-full bg-magenta shadow-[0_0_6px_#E055F0]" aria-hidden />
+    {label}
+  </span>
+);
+
+const SERVICE_EASE = { duration: 0.7, ease: EASE_OUT };
 
 export const ServiceGrid: React.FC = () => {
   const { language, t } = useLanguage();
   const [activeServiceId, setActiveServiceId] = useState(SERVICES[0].id);
   const [selectedServiceModal, setSelectedServiceModal] = useState<ServiceItem | null>(null);
   const [selectedServiceImageIndex, setSelectedServiceImageIndex] = useState(0);
-  
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const lastFocusRef = useRef<HTMLElement | null>(null);
+
   const activeServiceRaw = SERVICES.find(s => s.id === activeServiceId) || SERVICES[0];
-  
+
   const getLocalizedService = (raw: ServiceItem): ServiceItem => {
     const local = SERVICE_TRANSLATIONS[language]?.[raw.id];
     return {
@@ -105,217 +155,281 @@ export const ServiceGrid: React.FC = () => {
     };
   };
 
+  const localizeTag = (tag: string) => TAG_TRANSLATIONS[language]?.[tag] || tag;
+
   const activeService = getLocalizedService(activeServiceRaw);
+  const learnMore = language === 'cs' ? 'Zjistit více' : 'Learn more';
 
   const handleOpenModal = (service: ServiceItem) => {
+    lastFocusRef.current = document.activeElement as HTMLElement | null;
     setSelectedServiceModal(service);
     setSelectedServiceImageIndex(0);
   };
 
-  return (
-    <section id="services" className="py-24 relative z-10">
-      <div className="max-w-7xl mx-auto px-6">
-        
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div className="max-w-2xl animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-4">
-              {t('ourExpertise')}
-            </h2>
-            <p className="text-gray-300 text-lg font-light leading-relaxed">
-              {t('ourExpertiseDesc')}
-            </p>
-          </div>
-        </div>
+  const closeModal = () => {
+    setSelectedServiceModal(null);
+    lastFocusRef.current?.focus?.();
+  };
 
-        {/* Desktop: Tabbed Glass Interface */}
-        <div className="hidden lg:block">
-          <GlassCard className="border border-white/10 bg-black/40 backdrop-blur-2xl">
-            {/* Internal Layout Wrapper */}
-            <div className="flex flex-col lg:flex-row">
-              
-              {/* LEFT SIDE: Navigation (Tabs) */}
-              <div className="w-full lg:w-[35%] border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col flex-shrink-0">
-                <div className="p-5 pb-3">
-                  <span className="text-xs font-bold text-secondary uppercase tracking-widest">{t('servicesSubtitle')}</span>
-                </div>
-                
-                <div className="flex flex-col">
-                  {SERVICES.map((rawService) => {
-                    const service = getLocalizedService(rawService);
-                    const isActive = activeServiceId === service.id;
-                    return (
-                      <button
-                        key={service.id}
-                        onClick={() => setActiveServiceId(service.id)}
-                        className={`
-                          group relative w-full text-left px-5 py-4 flex items-center justify-between
-                          transition-all duration-300 ease-in-out border-l-4
-                          ${isActive 
-                            ? 'bg-white/5 border-secondary' 
-                            : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/10'}
-                        `}
-                      >
-                        <motion.div 
-                          whileHover={window.innerWidth >= 768 ? { x: 5 } : undefined}
-                          className="flex items-center gap-3 relative z-10"
+  // Escape closes the modal; focus moves into the dialog when it opens
+  useEffect(() => {
+    if (!selectedServiceModal) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', onKey);
+    const id = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedServiceModal]);
+
+  // Arrow-key navigation inside the vertical tab list (WAI-ARIA tabs pattern)
+  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next = -1;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (index + 1) % SERVICES.length;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (index - 1 + SERVICES.length) % SERVICES.length;
+    if (e.key === 'Home') next = 0;
+    if (e.key === 'End') next = SERVICES.length - 1;
+    if (next === -1) return;
+    e.preventDefault();
+    setActiveServiceId(SERVICES[next].id);
+    tabRefs.current[next]?.focus();
+  };
+
+  return (
+    <section id="services" className="relative z-10 py-28 md:py-36">
+      {/* Soft plum glows so the liquid glass has something to refract */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="glow-plum rounded-full absolute -left-40 top-[22%] w-[640px] h-[640px] animate-drift-slow" />
+        <div className="glow-orchid rounded-full absolute right-[-12%] top-[48%] w-[520px] h-[520px] opacity-70" />
+        <div className="glow-plum rounded-full absolute left-1/2 -translate-x-1/2 bottom-[-220px] w-[900px] h-[420px] opacity-60" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+
+        {/* Section Header */}
+        <motion.div {...blurInRise(0)} className="max-w-3xl mb-14 md:mb-20">
+          <span className="eyebrow block mb-4">{t('servicesSubtitle')}</span>
+          <h2 className="font-display font-bold text-ink text-4xl md:text-6xl tracking-tightest leading-[1.05] mb-6">
+            <GradientHeadline text={t('ourExpertise')} />
+          </h2>
+          <p className="text-ink-2 text-base md:text-lg font-light leading-relaxed max-w-2xl">
+            {t('ourExpertiseDesc')}
+          </p>
+        </motion.div>
+
+        {/* Desktop: Tabbed Liquid-Glass Panel */}
+        <motion.div {...blurInRise(0.1)} className="hidden lg:block">
+          <div className="glass-strong relative overflow-hidden rounded-card-lg">
+            {/* Inner plum light so the glass reads as lit from within */}
+            <div className="absolute inset-0 glass-inner-glow pointer-events-none" aria-hidden />
+
+            <div className="relative grid grid-cols-[minmax(300px,36%)_1fr]">
+
+              {/* LEFT: tab list */}
+              <div
+                role="tablist"
+                aria-orientation="vertical"
+                aria-label={t('servicesSubtitle')}
+                className="flex flex-col gap-1.5 p-4 border-r border-white/10"
+              >
+                {SERVICES.map((rawService, index) => {
+                  const service = getLocalizedService(rawService);
+                  const isActive = activeServiceId === service.id;
+                  return (
+                    <button
+                      key={service.id}
+                      ref={(el) => { tabRefs.current[index] = el; }}
+                      id={`service-tab-${service.id}`}
+                      role="tab"
+                      type="button"
+                      aria-selected={isActive}
+                      aria-controls="service-panel"
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => setActiveServiceId(service.id)}
+                      onKeyDown={(e) => handleTabKeyDown(e, index)}
+                      className="focus-ring group relative w-full text-left rounded-2xl px-3.5 py-[15px] flex items-center gap-3.5 transition-colors duration-500"
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="service-tab-active"
+                          transition={SERVICE_EASE}
+                          className="absolute inset-0 rounded-2xl bg-[linear-gradient(100deg,rgba(162,77,184,0.34)_0%,rgba(91,39,105,0.16)_60%,rgba(91,39,105,0.06)_100%)] border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_0_36px_rgba(162,77,184,0.25)]"
+                          aria-hidden
                         >
-                          <div className={`
-                            p-1.5 rounded-md transition-colors duration-300
-                            ${isActive ? 'bg-secondary/20 text-secondary' : 'bg-white/5 text-gray-400 group-hover:text-white'}
-                          `}>
-                            <service.icon className="w-4 h-4" />
-                          </div>
-                          <span className={`
-                            font-display font-medium text-base tracking-wide transition-colors duration-300
-                            ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}
-                          `}>
-                            {service.title}
-                          </span>
-                        </motion.div>
-                        
-                        <ChevronRight 
-                          className={`
-                            w-4 h-4 transition-all duration-300 
-                            ${isActive ? 'text-secondary translate-x-0 opacity-100' : 'text-gray-500 -translate-x-2 opacity-0 group-hover:opacity-50'}
-                          `} 
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
+                          {/* Glowing left edge */}
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[3px] rounded-full bg-gradient-to-b from-orchid-pale to-orchid-soft shadow-[0_0_12px_rgba(196,139,224,0.9)]" />
+                        </motion.span>
+                      )}
+                      {!isActive && (
+                        <span className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/[0.04] transition-colors duration-500" aria-hidden />
+                      )}
+
+                      <span className={`icon-chip relative w-10 h-10 rounded-xl shrink-0 transition-shadow duration-500 ${isActive ? 'shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_18px_rgba(196,139,224,0.35)]' : ''}`}>
+                        <service.icon className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} aria-hidden />
+                      </span>
+                      <span className={`relative flex-1 min-w-0 font-display font-medium text-[15px] tracking-[-0.01em] transition-colors duration-500 ${isActive ? 'text-ink' : 'text-ink-2 group-hover:text-ink'}`}>
+                        {service.title}
+                      </span>
+                      {service.isNew && <span className="relative"><NewBadge label={t('newBadge')} /></span>}
+                      <ChevronRight
+                        aria-hidden
+                        className={`relative w-4 h-4 shrink-0 transition-all duration-500 ${isActive ? 'text-orchid-soft opacity-100 translate-x-0' : 'text-ink-3 opacity-0 -translate-x-1.5 group-hover:opacity-60'}`}
+                      />
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* RIGHT SIDE: Content Reveal */}
-              <div className="w-full lg:w-[65%] relative flex flex-col bg-black/20">
-                <AnimatePresence mode="wait">
+              {/* RIGHT: content */}
+              <div
+                id="service-panel"
+                role="tabpanel"
+                aria-labelledby={`service-tab-${activeService.id}`}
+                className="relative p-4 min-h-[560px]"
+              >
+                <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={activeService.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -8, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.55, ease: EASE_OUT }}
                     className="flex flex-col h-full"
                   >
-                    {/* Image Area - Reduced height */}
-                    <div className="relative h-56 w-full overflow-hidden shrink-0">
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a050a] to-transparent z-10" />
-                      <motion.img 
-                        initial={{ scale: 1.05 }}
-                        animate={{ scale: 1 }}
-                        loading="lazy"
-                        transition={{ duration: 4, ease: "easeOut" }}
-                        src={activeService.imageUrl || `https://picsum.photos/seed/arch${activeService.id}/800/600`} 
-                        alt={`Služba: ${activeService.title} - InnerVisio`}
-                        className="w-full h-full object-cover opacity-80"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute top-6 right-6 z-20">
-                         <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl">
-                            <activeService.icon className="w-6 h-6 text-white" />
-                         </div>
+                    {/* Photo */}
+                    <div className="relative h-[330px] w-full overflow-hidden rounded-[24px] border border-white/10 shrink-0 bg-plum-black">
+                      {activeService.imageUrl ? (
+                        <motion.img
+                          initial={{ scale: 1.04 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 6, ease: EASE_OUT }}
+                          loading="lazy"
+                          src={activeService.imageUrl}
+                          alt={`Služba: ${activeService.title} - InnerVisio`}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <ServicePlaceholder icon={activeService.icon} />
+                      )}
+                      {/* Fade into the dark panel */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612] via-[#0c0612]/25 to-transparent pointer-events-none" />
+
+                      <div className="absolute top-5 left-5 flex items-center gap-2">
+                        {activeService.isNew && <NewBadge label={t('newBadge')} />}
+                      </div>
+                      <div className="absolute top-5 right-5">
+                        <span className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-2xl flex items-center justify-center w-12 h-12">
+                          <activeService.icon className="w-5 h-5 icon-gradient" strokeWidth={1.5} aria-hidden />
+                        </span>
                       </div>
                     </div>
 
-                    {/* Text Content - Compact padding */}
-                    <div className="p-6 md:p-8 flex flex-col flex-grow bg-gradient-to-b from-[#0a050a] to-transparent">
-                      <motion.div 
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        <h3 className="text-2xl md:text-3xl font-display font-bold text-white mb-3">
-                          {activeService.title}
-                        </h3>
-                        <p className="text-gray-300 leading-relaxed text-base max-w-xl font-light">
-                          {activeService.description}
-                        </p>
-                      </motion.div>
-                      
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between"
-                      >
-                        <div className="flex gap-3">
-                            <span className="px-2.5 py-1 rounded-full border border-white/10 text-xs text-gray-400 bg-white/5 uppercase tracking-wider">Professional</span>
-                            <span className="px-2.5 py-1 rounded-full border border-white/10 text-xs text-gray-400 bg-white/5 uppercase tracking-wider">Fast Delivery</span>
-                        </div>
-                        
-                        <button 
+                    {/* Text */}
+                    <div className="px-4 pt-7 pb-3 flex flex-col flex-grow">
+                      <h3 className="font-display font-bold text-ink text-3xl tracking-tightest leading-tight mb-3">
+                        {activeService.title}
+                      </h3>
+                      <p className="text-ink-2 text-base leading-relaxed font-light max-w-xl">
+                        {activeService.description}
+                      </p>
+
+                      <div className="mt-auto pt-6 flex items-center justify-between gap-4">
+                        <ul className="flex flex-wrap gap-2" aria-label="Tags">
+                          {(activeService.tags ?? DEFAULT_TAGS).map((tag) => (
+                            <li key={tag} className="glass-pill px-3.5 py-1.5 font-display font-medium text-xs text-ink-2">
+                              {localizeTag(tag)}
+                            </li>
+                          ))}
+                        </ul>
+
+                        <button
+                          type="button"
                           onClick={() => handleOpenModal(activeService)}
-                          className="flex items-center gap-2 text-white hover:text-secondary transition-colors group"
+                          className="btn-glass focus-ring group inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-display font-medium text-sm shrink-0"
                         >
-                          <span className="font-medium text-sm">{language === 'cs' ? 'Zjistit více' : 'Learn more'}</span>
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          {learnMore}
+                          <ArrowRight className="w-4 h-4 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
                         </button>
-                      </motion.div>
+                      </div>
                     </div>
                   </motion.div>
                 </AnimatePresence>
               </div>
 
             </div>
-          </GlassCard>
-        </div>
+          </div>
+        </motion.div>
 
         {/* Mobile: Horizontal Swipe Slider */}
-        <div className="lg:hidden mb-6 flex items-center justify-center gap-2 text-gray-400 animate-pulse">
-          <div className="w-8 h-px bg-gray-600" />
-          <span className="text-xs uppercase tracking-[0.2em] font-bold">{language === 'cs' ? 'přetáhněte doprava' : 'swipe right'}</span>
-          <div className="w-8 h-px bg-gray-600" />
+        <div className="lg:hidden mb-5 flex items-center gap-3 text-ink-3" aria-hidden>
+          <span className="w-8 h-px bg-gradient-to-r from-transparent to-orchid-soft/60" />
+          <span className="font-display text-[11px] uppercase tracking-[0.22em] font-medium">{language === 'cs' ? 'přetáhněte doprava' : 'swipe right'}</span>
+          <ArrowRight className="w-3.5 h-3.5 text-orchid-soft" />
         </div>
-        <div className="lg:hidden -mx-6 px-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar pb-8">
-          <div className="flex gap-6 w-max">
+        <div className="lg:hidden -mx-6 px-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar pt-2 pb-10 scroll-px-6">
+          <ul className="flex gap-4 w-max">
             {SERVICES.map((rawService, index) => {
               const service = getLocalizedService(rawService);
               return (
-                <motion.div
+                <motion.li
                   key={service.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -5 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="group w-[85vw] snap-center"
+                  {...blurInRise(Math.min(index, 3) * 0.08, 24)}
+                  className="w-[84vw] max-w-[380px] snap-start"
                 >
-                  <GlassCard className="h-full border border-white/10 bg-white/5 overflow-hidden flex flex-col">
-                    <div className="relative h-48 w-full overflow-hidden">
-                      <img 
-                        loading="lazy"
-                        src={service.imageUrl || `https://picsum.photos/seed/arch${service.id}/800/600`} 
-                        alt={`Vizualizace: ${service.title}`}
-                        className="w-full h-full object-cover opacity-60 md:group-hover:scale-110 transition-transform duration-700"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a050a] to-transparent" />
-                      <div className="absolute top-4 right-4">
-                        <div className="w-10 h-10 rounded-full bg-secondary/20 backdrop-blur-md border border-secondary/30 flex items-center justify-center">
-                          <service.icon className="w-5 h-5 text-secondary" />
-                        </div>
+                  <article className="glass relative h-full overflow-hidden rounded-card flex flex-col">
+                    <div className="absolute inset-0 glass-inner-glow pointer-events-none" aria-hidden />
+                    <div className="relative p-2">
+                      <div className="relative h-48 sm:h-56 w-full overflow-hidden rounded-[22px] bg-plum-black">
+                        {service.imageUrl ? (
+                          <img
+                            loading="lazy"
+                            src={service.imageUrl}
+                            alt={`Vizualizace: ${service.title}`}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <ServicePlaceholder icon={service.icon} />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612]/80 via-transparent to-transparent pointer-events-none" />
+                        {service.isNew && (
+                          <div className="absolute top-3 left-3">
+                            <NewBadge label={t('newBadge')} />
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="p-6 flex flex-col flex-grow">
-                      <h3 className="text-xl font-display font-bold text-white mb-3 md:group-hover:text-secondary transition-colors">
-                        {service.title}
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed mb-6 flex-grow font-light">
+                    <div className="relative px-5 pt-3 pb-5 flex flex-col flex-grow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="icon-chip w-10 h-10 rounded-xl shrink-0">
+                          <service.icon className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} aria-hidden />
+                        </span>
+                        <h3 className="font-display font-bold text-ink text-xl tracking-tightest leading-tight">
+                          {service.title}
+                        </h3>
+                      </div>
+                      <p className="text-ink-2 text-sm leading-relaxed font-light mb-5 flex-grow">
                         {service.description}
                       </p>
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => handleOpenModal(service)}
-                        className="flex items-center gap-2 text-white text-sm font-medium group/btn py-2"
+                        className="btn-glass focus-ring self-start inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-display font-medium text-sm"
                       >
-                        <span>{language === 'cs' ? 'Zjistit více' : 'Learn more'}</span>
-                        <ArrowRight className="w-4 h-4 md:group-hover/btn:translate-x-1 transition-transform" />
+                        {learnMore}
+                        <ArrowRight className="w-4 h-4 text-orchid-soft" aria-hidden />
                       </button>
                     </div>
-                  </GlassCard>
-                </motion.div>
+                  </article>
+                </motion.li>
               );
             })}
-          </div>
+          </ul>
         </div>
 
       </div>
@@ -325,142 +439,176 @@ export const ServiceGrid: React.FC = () => {
         <AnimatePresence>
           {selectedServiceModal && (() => {
             const service = getLocalizedService(selectedServiceModal);
+            const modalImage = service.galleryUrls?.[selectedServiceImageIndex] || service.imageUrl;
             return (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center md:p-6">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  onClick={() => setSelectedServiceModal(null)}
-                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  transition={{ duration: 0.5, ease: EASE_OUT }}
+                  onClick={closeModal}
+                  className="absolute inset-0 bg-[#050308]/80 backdrop-blur-md"
+                  aria-hidden
                 />
+                {/* Plum glow behind the dialog */}
+                <div className="hidden md:block absolute w-[70vw] h-[60vh] glow-plum rounded-full pointer-events-none" aria-hidden />
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="relative w-full h-full md:h-auto md:max-w-6xl md:max-h-[85vh] bg-[#050205] md:border md:border-white/5 md:rounded-3xl shadow-[0_0_80px_rgba(101,36,111,0.15)] z-10 flex flex-col md:flex-row overflow-hidden"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="service-modal-title"
+                  initial={{ opacity: 0, y: 28, filter: 'blur(12px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+                  transition={{ duration: 0.7, ease: EASE_OUT }}
+                  className="relative w-full h-full md:h-auto md:max-w-6xl md:max-h-[86vh] z-10 flex flex-col md:flex-row overflow-hidden md:rounded-card-lg bg-[linear-gradient(160deg,rgba(67,32,79,0.72)_0%,rgba(20,10,26,0.94)_55%,rgba(10,5,14,0.96)_100%)] backdrop-blur-[28px] md:border-[1.5px] md:border-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_30px_80px_rgba(0,0,0,0.6),0_0_90px_rgba(162,77,184,0.22)]"
                 >
                   <button
+                    ref={closeBtnRef}
                     type="button"
-                    onClick={() => setSelectedServiceModal(null)}
-                    className="absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-3 bg-black/50 backdrop-blur-md hover:bg-white/10 rounded-full text-white transition-all z-[110] border border-white/10 outline-none focus:outline-none focus:ring-0 select-none"
+                    onClick={closeModal}
+                    aria-label={t('portfolioCloseBtn')}
+                    className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute top-3 right-3 md:top-5 md:right-5 w-11 h-11 rounded-full flex items-center justify-center z-[110] select-none"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    <X className="w-4 h-4 md:w-5 md:h-5" />
+                    <X className="w-5 h-5" aria-hidden />
                   </button>
-                  
+
                   {/* Left: Image & Thumbnails */}
-                  <div className="w-full md:w-[50%] lg:w-[60%] flex flex-col shrink-0 border-b md:border-b-0 md:border-r border-white/5 relative bg-black">
-                    <div className="relative flex-grow min-h-[30vh] sm:min-h-[35vh] md:min-h-[500px]">
-                      <motion.img 
-                        key={selectedServiceImageIndex}
-                        loading="lazy"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.4 }}
-                        src={service.galleryUrls?.[selectedServiceImageIndex] || service.imageUrl || `https://picsum.photos/seed/arch${service.id}/800/600`} 
-                        alt={`Služba: ${service.title}`} 
-                        className="absolute inset-0 w-full h-full object-cover" 
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#050205] to-transparent opacity-90 pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#050205] via-transparent to-transparent opacity-60 pointer-events-none" />
-                      
-                      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20">
-                        <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl">
-                          <service.icon className="w-5 h-5 md:w-7 md:h-7 text-secondary drop-shadow-md" />
+                  <div className="w-full md:w-[50%] lg:w-[58%] flex flex-col shrink-0 relative md:p-3">
+                    <div className="relative flex-grow min-h-[34vh] sm:min-h-[38vh] md:min-h-[520px] overflow-hidden md:rounded-[26px] bg-plum-black">
+                      {modalImage ? (
+                        <motion.img
+                          key={selectedServiceImageIndex}
+                          loading="lazy"
+                          initial={{ opacity: 0, filter: 'blur(8px)' }}
+                          animate={{ opacity: 1, filter: 'blur(0px)' }}
+                          transition={{ duration: 0.6, ease: EASE_OUT }}
+                          src={modalImage}
+                          alt={`Služba: ${service.title}`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <ServicePlaceholder icon={service.icon} />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a050e]/85 via-transparent to-transparent pointer-events-none" />
+
+                      <div className="absolute top-4 left-4 md:top-5 md:left-5 z-20 flex items-center gap-2">
+                        <span className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-2xl flex items-center justify-center w-11 h-11 md:w-12 md:h-12">
+                          <service.icon className="w-5 h-5 icon-gradient" strokeWidth={1.5} aria-hidden />
+                        </span>
+                        {service.isNew && <NewBadge label={t('newBadge')} />}
+                      </div>
+
+                      {service.galleryUrls && service.galleryUrls.length > 1 && (
+                        <div className="absolute bottom-4 md:bottom-5 left-0 w-full flex justify-center z-20 px-4">
+                          <div className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full flex gap-2 p-1.5 max-w-full overflow-x-auto no-scrollbar">
+                            {service.galleryUrls.map((url, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedServiceImageIndex(idx);
+                                }}
+                                aria-label={language === 'cs' ? `Zobrazit obrázek ${idx + 1}` : `View image ${idx + 1}`}
+                                aria-current={selectedServiceImageIndex === idx}
+                                className={`focus-ring relative shrink-0 w-12 h-9 md:w-16 md:h-11 rounded-full overflow-hidden transition-all duration-500 ${
+                                  selectedServiceImageIndex === idx
+                                    ? 'ring-2 ring-orchid-soft shadow-[0_0_14px_rgba(196,139,224,0.6)] opacity-100'
+                                    : 'opacity-50 hover:opacity-100'
+                                }`}
+                              >
+                                <img
+                                  loading="lazy"
+                                  src={url}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
-                    
-                    {service.galleryUrls && service.galleryUrls.length > 1 && (
-                      <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-2 md:gap-3 px-4 md:px-6 overflow-x-auto no-scrollbar z-20">
-                        {service.galleryUrls.map((url, idx) => (
-                          <button
-                            key={idx}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedServiceImageIndex(idx);
-                            }}
-                            aria-label={`View image ${idx + 1}`}
-                            className={`relative shrink-0 w-12 h-10 md:w-20 md:h-14 rounded overflow-hidden transition-all duration-300 ${
-                              selectedServiceImageIndex === idx 
-                                ? 'ring-2 ring-secondary ring-offset-2 ring-offset-[#050205] opacity-100' 
-                                : 'opacity-40 md:hover:opacity-100 border border-white/10'
-                            }`}
-                          >
-                            <img 
-                              loading="lazy"
-                              src={url} 
-                              alt={`${service.title} - ${idx + 1}`} 
-                              className="w-full h-full object-cover" 
-                              referrerPolicy="no-referrer"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                  
+
                   {/* Right: Text Content */}
-                  <div className="w-full md:w-[50%] lg:w-[40%] p-5 sm:p-6 md:p-14 flex flex-col justify-center relative bg-gradient-to-br from-[#0a050a] to-[#050205] overflow-y-auto no-scrollbar">
-                    <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-6">
-                      <span className="px-2.5 py-1 md:px-3 md:py-1 bg-secondary/10 border border-secondary/20 text-secondary rounded shadow-[0_0_15px_rgba(101,36,111,0.2)] text-[9px] md:text-xs font-bold tracking-widest uppercase">
+                  <div className="relative w-full md:w-[50%] lg:w-[42%] flex-1 md:flex-none p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto no-scrollbar">
+                    <div className="absolute inset-0 glass-inner-glow opacity-70 pointer-events-none" aria-hidden />
+                    <div className="relative flex flex-col flex-grow">
+                      <span className="eyebrow block mb-3 md:mb-5">
                         {language === 'cs' ? 'Služby Studia' : 'Studio Services'}
                       </span>
-                    </div>
-                    
-                    <h3 className="text-2xl md:text-5xl font-display font-bold text-white mb-3 md:mb-6 leading-tight drop-shadow-lg">
-                      {service.title}
-                    </h3>
-                    
-                    <div className="h-px w-12 md:w-16 bg-gradient-to-r from-secondary to-transparent mb-4 md:mb-8" />
-                    
-                    <p className="text-gray-300 leading-relaxed text-xs sm:text-sm md:text-base mb-4 md:mb-8 font-light">
-                      {service.detailedDescription || service.description}
-                    </p>
-                    
-                    {service.features && (
-                      <ul className="mb-6 md:mb-12 space-y-2 md:space-y-3">
-                        {service.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 md:gap-3">
-                            <div className="mt-1 md:mt-1.5 w-1.5 h-1.5 rounded-full bg-secondary shrink-0 shadow-[0_0_8px_rgba(101,36,111,0.8)]" />
-                            <span className="text-gray-400 text-xs sm:text-sm md:text-base font-light">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    
-                    {/* Call to action */}
-                    <div className="pt-4 md:pt-6 border-t border-white/5 mt-auto">
-                      <p className="text-xs md:text-sm text-secondary font-bold tracking-widest uppercase mb-2 md:mb-4">{language === 'cs' ? 'Poptat tuto službu' : 'Request service'}</p>
-                      <a 
-                        href="#contact"
-                        onClick={() => setSelectedServiceModal(null)}
-                        className="group flex items-center justify-between w-full px-4 py-3 md:px-6 md:py-4 bg-white md:hover:bg-gray-100 text-black rounded-lg font-bold transition-all shadow-[0_4px_20px_rgba(255,255,255,0.1)] md:hover:shadow-[0_4px_25px_rgba(255,255,255,0.2)] text-sm md:text-base mb-3"
-                      >
-                        {language === 'cs' ? 'Mám zájem' : 'I am interested'}
-                        <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </a>
-                      
-                      {service.id === '6' && (
-                        <a 
-                          href="https://granviaresidence.cz"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group flex items-center justify-between w-full px-4 py-3 md:px-6 md:py-4 bg-secondary/20 md:hover:bg-secondary/40 border border-secondary text-white rounded-lg font-bold transition-all text-sm md:text-base mb-3"
-                        >
-                          {language === 'cs' ? 'Chci vidět ukázku' : 'View demo'}
-                          <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                        </a>
+
+                      <h3 id="service-modal-title" className="font-display font-bold text-ink text-3xl md:text-[44px] tracking-tightest leading-[1.08] mb-4 md:mb-6 pr-12 md:pr-0">
+                        {service.title}
+                      </h3>
+
+                      <div className="h-px w-14 bg-gradient-to-r from-orchid-soft to-transparent mb-5 md:mb-7" aria-hidden />
+
+                      <p className="text-ink-2 leading-relaxed text-sm md:text-base mb-6 md:mb-8 font-light">
+                        {service.detailedDescription || service.description}
+                      </p>
+
+                      {service.features && (
+                        <ul className="mb-8 md:mb-10 space-y-2.5 md:space-y-3">
+                          {service.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-3">
+                              <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-orchid-soft shrink-0 shadow-[0_0_10px_rgba(196,139,224,0.9)]" aria-hidden />
+                              <span className="text-ink text-sm md:text-[15px] font-light leading-relaxed">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
                       )}
-                      
-                      <button
-                        onClick={() => setSelectedServiceModal(null)}
-                        className="w-full py-2 text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        {t('portfolioCloseBtn')}
-                      </button>
+
+                      {/* Call to action */}
+                      <div className="pt-5 md:pt-6 border-t border-white/10 mt-auto">
+                        <p className="eyebrow block mb-3 md:mb-4">{language === 'cs' ? 'Poptat tuto službu' : 'Request service'}</p>
+                        <div className="flex flex-col gap-2.5">
+                          <a
+                            href="#contact"
+                            onClick={closeModal}
+                            className="btn-primary focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
+                          >
+                            {language === 'cs' ? 'Mám zájem' : 'I am interested'}
+                            <ArrowUpRight className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+                          </a>
+
+                          {service.id === '6' && (
+                            <a
+                              href="https://granviaresidence.cz"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-glass focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
+                            >
+                              {language === 'cs' ? 'Chci vidět ukázku' : 'View demo'}
+                              <ArrowUpRight className="w-5 h-5 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+                            </a>
+                          )}
+
+                          {service.id === '7' && (
+                            <a
+                              href="#pricing-ai"
+                              onClick={closeModal}
+                              className="btn-glass focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
+                            >
+                              {language === 'cs' ? 'Zobrazit ceník AI vizualizací' : 'See AI visualization pricing'}
+                              <ArrowRight className="w-5 h-5 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+                            </a>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={closeModal}
+                            className="focus-ring w-full py-2.5 rounded-full font-display text-sm text-ink-3 hover:text-ink transition-colors duration-300"
+                          >
+                            {t('portfolioCloseBtn')}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>

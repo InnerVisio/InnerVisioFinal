@@ -1,18 +1,5 @@
-import { Box, Layers, MonitorPlay, Zap, Cuboid, Eye } from 'lucide-react';
-import { ServiceItem, NavItem, StatItem, ProjectItem, PricingItem } from './types';
-
-export const NAV_ITEMS: NavItem[] = [
-  { label: 'Služby', href: '#services' },
-  { label: 'Práce', href: '#work' },
-  { label: 'Ceník', href: '#pricing' },
-  { label: 'FAQ', href: '#faq' },
-];
-
-export const STATS: StatItem[] = [
-  { value: '150+', label: 'Dokončených projektů' },
-  { value: '50+', label: 'Spokojených klientů' },
-  { value: '24h', label: 'Rychlost odezvy' }
-];
+import { Box, Layers, MonitorPlay, Zap, Cuboid, Eye, Sparkles } from 'lucide-react';
+import { ServiceItem, ProjectItem, PricingItem } from './types';
 
 export const SERVICES: ServiceItem[] = [
   {
@@ -87,9 +74,9 @@ export const SERVICES: ServiceItem[] = [
     icon: MonitorPlay,
     colSpan: 1,
     rowSpan: 1,
-    imageUrl: 'https://images.unsplash.com/photo-1478416272538-5f7e51dc5400?auto=format&fit=crop&q=80&w=2000',
+    imageUrl: 'https://images.unsplash.com/photo-1478416272538-5f7e51dc5400?auto=format&fit=crop&q=70&w=900',
     galleryUrls: [
-      'https://images.unsplash.com/photo-1478416272538-5f7e51dc5400?auto=format&fit=crop&q=80&w=2000'
+      'https://images.unsplash.com/photo-1478416272538-5f7e51dc5400?auto=format&fit=crop&q=70&w=900'
     ]
   },
   {
@@ -105,8 +92,28 @@ export const SERVICES: ServiceItem[] = [
     galleryUrls: [
       '/Banner/Banner.webp'
     ]
+  },
+  {
+    id: '7',
+    title: 'AI vizualizace',
+    description: 'Fotorealistické vizualizace z fotky nebo skici do 24 hodin. Ideální pro inzerci a rekonstrukce.',
+    detailedDescription: 'Z fotky z mobilu, skici nebo půdorysu vytvoříme fotorealistickou vizualizaci interiéru či exteriéru do 24 hodin. AI je pro nás nástroj, nápad, materiály a funkčnost dodává člověk. Každý snímek ručně kontrolujeme, aby seděla geometrie, proporce i světlo.',
+    features: ['Hotovo do 24 hodin', '3 stylové varianty v ceně', 'Zachovaná geometrie a proporce prostoru', 'Transparentní označení dle EU AI Act'],
+    icon: Sparkles,
+    colSpan: 1,
+    rowSpan: 1,
+    isNew: true,
+    tags: ['Fast Delivery', '3 Styles'],
+    // No imageUrl yet: a branded placeholder is shown until a real AI example is added here
   }
 ];
+
+// Before/after example in the AI pricing tab. Fill in image paths (e.g. '/AIVizualizace/pred.webp');
+// while empty, the slider shows branded placeholders.
+export const AI_BEFORE_AFTER = {
+  before: '',
+  after: '',
+};
 
 export const PRICING: PricingItem[] = [
   {
@@ -277,7 +284,3 @@ export const HERO_SLIDES = [
     status: "Nové"
   }
 ];
-
-// Deprecated single constants kept for safety
-export const HERO_IMAGE = "https://picsum.photos/seed/building8/1200/1600";
-export const HERO_VIDEO_THUMB = "https://picsum.photos/seed/interior9/800/600";

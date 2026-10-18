@@ -5,12 +5,147 @@
 [functions]
   directory = "netlify/functions"
 
+# ---------- Routing ----------
+# Only real app routes fall back to the SPA; every other unknown URL gets dist/404.html with a 404 status
+# (a catch-all 200 made every typo URL a duplicate of the homepage for search engines).
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
 [[redirects]]
-  from = "/*"
+  from = "/101-exterier"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/101-Exterier"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/email-image"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/email/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/unsubscribe"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/odhlasit"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/odhlasit-se"
+  to = "/index.html"
+  status = 200
+
+# ---------- Headers ----------
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+
+# Hashed build output never changes under the same name
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Internal utility pages (newsletter asset, unsubscribe) stay out of search results
+[[headers]]
+  for = "/101-exterier"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/101-Exterier"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/email-image"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/email/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/unsubscribe"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/odhlasit"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+[[headers]]
+  for = "/odhlasit-se"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# Portfolio and hero images: 30 days in the browser, revalidated afterwards
+[[headers]]
+  for = "/Banner/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/HeroSection/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/Exterier/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/Lipence/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/2DPudorysy/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/3DPudorys/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/RezidenceHorska/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/VizualizaceBludovice/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/VizualizaceExterieruSkorkov/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/VizualizaceExterieruTran/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/VizualizaceInterieru3/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/VizualizaceKancelare/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/llms.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"

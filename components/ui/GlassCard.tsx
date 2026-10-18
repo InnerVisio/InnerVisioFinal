@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { blurInRise } from './brand';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -8,36 +9,29 @@ interface GlassCardProps {
   delay?: number;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ 
-  children, 
-  className = '', 
+// Liquid glass surface from the brand guidelines; hover strengthens the plum glow
+export const GlassCard: React.FC<GlassCardProps> = ({
+  children,
+  className = '',
   hoverEffect = false,
-  delay = 0 
+  delay = 0
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay, ease: "easeOut" }}
+      {...blurInRise(delay)}
       className={`
-        relative overflow-hidden
-        bg-glass backdrop-blur-xl 
-        border border-glass-border 
-        rounded-2xl
-        transition-all duration-500
-        ${hoverEffect ? 'md:hover:bg-glass-hover md:hover:border-secondary/30 md:hover:shadow-[0_0_30px_rgba(101,36,111,0.2)]' : ''}
+        glass relative overflow-hidden rounded-card
+        transition-shadow duration-500
+        ${hoverEffect ? 'md:hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_30px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(162,77,184,0.35)]' : ''}
         ${className}
       `}
     >
-      {/* Subtle Gradient Noise Texture Overlay could go here */}
       <div className="relative z-10 h-full">
         {children}
       </div>
-      
-      {/* Decorative Gradient Blob */}
+
       {hoverEffect && (
-        <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-secondary/20 blur-[50px] rounded-full pointer-events-none transition-opacity duration-500 opacity-0 md:group-hover:opacity-100" />
+        <div className="absolute -bottom-20 -right-20 w-48 h-48 glow-plum rounded-full transition-opacity duration-500 opacity-0 md:group-hover:opacity-100" />
       )}
     </motion.div>
   );

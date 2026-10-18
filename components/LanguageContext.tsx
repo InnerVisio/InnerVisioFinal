@@ -30,6 +30,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return 'cs'; // Default to Czech
   });
 
+  // Keep <html lang> in sync for search engines and screen readers
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     try {
@@ -44,11 +49,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       startProject: "Zahájit projekt",
       servicesLabel: "Služby",
       workLabel: "Práce",
+      aiVizLabel: "AI vizualizace",
       pricingLabel: "Ceník",
       faqLabel: "FAQ",
       logoSub: "Architecture",
 
       // Hero Section
+      heroAiChip: "Nově: AI vizualizace do 24 hodin",
+      heroKicker: "3D a AI vizualizace interiérů a exteriérů",
       heroTitle1: "Navrhujeme",
       heroTitle2: "Nepředstavitelné",
       heroSub: "Přinášíme prezentaci nemovitostí na nové úrovni. Zvyšte svou úroveň prezentace skrze světlo, emoce a profesionální vizuál.",
@@ -103,7 +111,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Pricing Section
       pricingTitle: "Ceník",
       pricingSubtitle: "Přehledné Ceny",
-      pricingDesc: "Ceny jsou orientační a závisí na složitosti projektu a dodaných podkladech. Kontaktujte nás pro individuální kalkulaci.",
+      pricingDesc: "Vyberte si cestu, která sedí vašemu projektu. AI vizualizace pro rychlost a marketing, klasické 3D vizualizace pro přesnost podle projektové dokumentace.",
+      pricingFootnote: "Ceny jsou orientační a závisí na složitosti projektu a dodaných podkladech. Nacenění je zdarma a nezávazné, ozveme se do 24 hodin.",
       pricingPopular: "Populární",
       currencyUnit: "Kč",
       fromLabel: "od",
@@ -116,6 +125,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       faqTabAll: "Všechny dotazy",
       faqTabProcess: "Průběh & Spolupráce",
       faqTabPricing: "Ceny & Termíny",
+      faqTabAi: "AI vizualizace",
+      newBadge: "Nové",
       faqFreeQuoteTitle: "Nezávazná nabídka zdarma",
       faqFreeQuoteDesc: "Zaslání a nacenění podkladů je plně zdarma a k ničemu vás nezavazuje. Ozveme se do 24 hodin.",
       faqDeadlinesTitle: "Dodržení termínů",
@@ -160,11 +171,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       startProject: "Start project",
       servicesLabel: "Services",
       workLabel: "Work",
+      aiVizLabel: "AI visualization",
       pricingLabel: "Pricing",
       faqLabel: "FAQ",
       logoSub: "Architecture",
 
       // Hero Section
+      heroAiChip: "New: AI visualizations within 24 hours",
+      heroKicker: "3D & AI interior and exterior visualization",
       heroTitle1: "We Design",
       heroTitle2: "The Unimaginable",
       heroSub: "Elevate property presentations to the next level. Maximize presentation value through masterfully rendered light, emotions, and professional visuals.",
@@ -219,7 +233,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Pricing Section
       pricingTitle: "Pricing",
       pricingSubtitle: "Transparent Rates",
-      pricingDesc: "Prices are introductory guidelines depending on project complexity and provided data quality. Contact us for a personalized, exact quotation.",
+      pricingDesc: "Choose the path that fits your project. AI visualizations for speed and marketing, classic 3D renderings for precision based on project documentation.",
+      pricingFootnote: "Prices are indicative and depend on project complexity and the materials provided. Quotes are free and non-binding, and we reply within 24 hours.",
       pricingPopular: "Popular",
       currencyUnit: "CZK",
       fromLabel: "from",
@@ -232,6 +247,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       faqTabAll: "All questions",
       faqTabProcess: "Process & Cooperation",
       faqTabPricing: "Pricing & Timelines",
+      faqTabAi: "AI visualization",
+      newBadge: "New",
       faqFreeQuoteTitle: "Free No-obligation Offer",
       faqFreeQuoteDesc: "Evaluating your blueprints and sending code estimates is fully free. We usually respond within 24 hours.",
       faqDeadlinesTitle: "Absolute Deadlines",

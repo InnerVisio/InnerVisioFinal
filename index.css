@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Base ---------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: #050308;
+    color: #F1E6F2;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: #7A3589;
+    color: #F1E6F2;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* Page scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #050308; }
+  ::-webkit-scrollbar-thumb { background: #431F4D; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #7A3589; }
+}
+
+/* Uses the individual translate/scale properties so it composes with Tailwind's
+   transform utilities (e.g. -translate-x-1/2 centering) instead of overriding them */
+@keyframes iv-drift {
+  0%, 100% { translate: 0 0; scale: 1; }
+  50% { translate: 4% -3%; scale: 1.06; }
+}
+
+/* ---------- Brand components (see components/ui/brand.ts for usage) ----------
+   In the components layer so Tailwind utilities on the same element still win. */
+
+@layer components {
+  /* Liquid glass: always place over a plum glow or a photo, otherwise it is invisible */
+  .glass {
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+    border: 1.5px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 30px 80px rgba(0, 0, 0, 0.55);
+  }
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.09);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    backdrop-filter: blur(28px) saturate(1.5);
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 30px 80px rgba(0, 0, 0, 0.55);
+  }
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.10);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+  }
+  /* Small inner glow inside a glass card (radial 0.3–0.5) */
+  .glass-inner-glow {
+    background-image: radial-gradient(120% 70% at 30% 0%, rgba(162, 77, 184, 0.30) 0%, transparent 65%);
+  }
+
+  /* Gradients */
+  .bg-logo-plum { background-image: linear-gradient(90deg, #34193C 0%, #5B2769 100%); }
+  .bg-deep-plum { background-image: linear-gradient(160deg, #43204F 0%, #1F0F29 100%); }
+  .bg-chip-gradient { background-image: linear-gradient(160deg, #F0D4F4 0%, #C48BE0 100%); }
+  .text-gradient {
+    background-image: linear-gradient(95deg, #C48BE0 0%, #D98BEA 55%, #F2A6E8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Soft background glows: large, blurred, slowly drifting */
+  .glow-plum {
+    background: radial-gradient(circle, rgba(140, 50, 150, 0.55) 0%, transparent 70%);
+    filter: blur(90px);
+    pointer-events: none;
+  }
+  .glow-orchid {
+    background: radial-gradient(circle, rgba(200, 60, 190, 0.40) 0%, transparent 70%);
+    filter: blur(100px);
+    pointer-events: none;
+  }
+
+  /* Icons in the brand gradient (#F0D4F4 -> #C48BE0); gradient defined once in index.html <body> */
+  .icon-gradient { stroke: url(#iv-icon-gradient); }
+  /* Rounded glass square that holds a gradient icon */
+  .icon-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: linear-gradient(160deg, rgba(240, 212, 244, 0.14) 0%, rgba(162, 77, 184, 0.22) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: #A24DB8;
+    color: #FFFFFF;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 30px rgba(162, 77, 184, 0.35);
+    transition: background-color .3s, box-shadow .3s;
+  }
+  .btn-primary:hover { background: #B05EC6; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 44px rgba(162, 77, 184, 0.55); }
+  .btn-glass {
+    /* faint plum tint so glass buttons don't read neutral grey over pure black */
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.10) 0%, rgba(162, 77, 184, 0.10) 100%);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    color: #F1E6F2;
+    transition: background-color .3s, border-color .3s, box-shadow .3s;
+  }
+  .btn-glass:hover { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.32); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 30px rgba(162, 77, 184, 0.35); }
+  .btn-light {
+    background: #F1E6F2;
+    color: #1F0F29;
+    transition: background-color .3s, box-shadow .3s;
+  }
+  .btn-light:hover { background: #FFFFFF; box-shadow: 0 0 30px rgba(240, 212, 244, 0.35); }
+
+  /* Links and eyebrow labels */
+  .link-orchid { color: #C48BE0; transition: color .25s; }
+  .link-orchid:hover { color: #D98BEA; }
+  .eyebrow {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #C48BE0;
+  }
+
+  /* Consistent keyboard focus */
+  .focus-ring:focus { outline: none; }
+  .focus-ring:focus-visible { outline: 2px solid #C48BE0; outline-offset: 3px; }
+
+  /* Scrollbars inside elements */
+  .custom-scrollbar::-webkit-scrollbar { height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}

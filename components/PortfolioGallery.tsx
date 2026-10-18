@@ -1,12 +1,11 @@
-import React, { useState, useRef, MouseEvent } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
-import { Plus, ArrowUpRight, MapPin, Tag, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowUpRight, ArrowRight, ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
 import { PROJECTS } from '../constants';
 import { ProjectItem } from '../types';
 import { useLanguage, Language } from './LanguageContext';
-
-const springTransition = { type: "spring" as const, stiffness: 70, damping: 20 };
+import { blurInRise, EASE_OUT } from './ui/brand';
 
 const PROJECT_TRANSLATIONS: Record<Language, Record<string, { title: string; location: string; description: string; category: string }>> = {
   cs: {
@@ -87,10 +86,18 @@ const PROJECT_TRANSLATIONS: Record<Language, Record<string, { title: string; loc
   }
 };
 
+// Filter keys map onto the raw (Czech) categories in constants
+type CategoryFilter = 'all' | 'Exteriér' | 'Interiér';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
 export const PortfolioGallery: React.FC = () => {
   const { language, t } = useLanguage();
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [filter, setFilter] = useState<CategoryFilter>('all');
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const lastFocusRef = useRef<HTMLElement | null>(null);
 
   const getLocalizedProject = (raw: ProjectItem): ProjectItem => {
     const local = PROJECT_TRANSLATIONS[language]?.[raw.id];
@@ -104,193 +111,313 @@ export const PortfolioGallery: React.FC = () => {
   };
 
   const handleSelectProject = (project: ProjectItem) => {
+    lastFocusRef.current = document.activeElement as HTMLElement | null;
     setSelectedProject(project);
     setSelectedImageIndex(0);
   };
 
+  const closeModal = () => {
+    setSelectedProject(null);
+    lastFocusRef.current?.focus?.();
+  };
+
   const hasSelectedProject = selectedProject !== null;
   const activeProject = selectedProject ? getLocalizedProject(selectedProject) : null;
+  const gallery = activeProject ? (activeProject.galleryUrls?.length ? activeProject.galleryUrls : [activeProject.imageUrl]) : [];
+  const showPrev = () => setSelectedImageIndex((i) => (i - 1 + gallery.length) % gallery.length);
+  const showNext = () => setSelectedImageIndex((i) => (i + 1) % gallery.length);
+
+  // Keyboard: Escape closes, arrows browse; focus moves into the dialog on open
+  useEffect(() => {
+    if (!selectedProject) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeModal();
+      if (gallery.length > 1 && e.key === 'ArrowRight') showNext();
+      if (gallery.length > 1 && e.key === 'ArrowLeft') showPrev();
+    };
+    window.addEventListener('keydown', onKey);
+    const id = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.clearTimeout(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProject, gallery.length]);
+
+  const filters: { key: CategoryFilter; label: string }[] = [
+    { key: 'all', label: t('portfolioCatAll') },
+    { key: 'Exteriér', label: t('portfolioCatExterier') },
+    { key: 'Interiér', label: t('portfolioCatInterier') },
+  ];
+  const visibleProjects = PROJECTS.filter((p) => filter === 'all' || p.category === filter);
 
   return (
-    <section id="work" className="py-32 relative bg-background">
-      <div className="max-w-7xl mx-auto px-6">
-        
-        {/* Header with reveal animation */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-12 md:mb-20 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 text-center md:text-left animate-fade-in"
+    <section id="work" className="relative py-28 md:py-36">
+      {/* Soft plum glows separating the section and lighting the glass */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="glow-plum rounded-full absolute right-[-180px] top-[4%] w-[620px] h-[620px] animate-drift-slow" />
+        <div className="glow-plum rounded-full absolute left-[-220px] top-[45%] w-[560px] h-[560px] opacity-70" />
+        <div className="glow-orchid rounded-full absolute left-1/2 -translate-x-1/2 bottom-[-160px] w-[700px] h-[320px] opacity-50" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6">
+
+        {/* Header */}
+        <motion.div
+          {...blurInRise(0)}
+          className="mb-10 md:mb-14 flex flex-col md:flex-row justify-between md:items-end gap-6 md:gap-12"
         >
-          <div className="flex flex-col items-center md:items-start">
-            <span className="text-secondary font-medium tracking-widest uppercase text-xs md:text-sm mb-2 block font-display">
-              {t('portfolioTitle')}
-            </span>
-            <h2 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter">
+          <div className="max-w-2xl">
+            <span className="eyebrow block mb-4">{t('portfolioTitle')}</span>
+            <h2 className="font-display font-bold text-ink text-4xl md:text-6xl tracking-tightest leading-[1.05]">
               {language === 'cs' ? (
-                <>Galerie <span className="text-gray-600">Vizí</span></>
+                <>Galerie <span className="text-gradient">Vizí</span></>
               ) : (
-                <>Gallery of <span className="text-gray-600">Visions</span></>
+                <>Gallery of <span className="text-gradient">Visions</span></>
               )}
             </h2>
           </div>
-          <p className="text-gray-400 max-w-md text-sm md:text-lg leading-relaxed font-light">
+          <p className="text-ink-2 max-w-md text-base md:text-lg leading-relaxed font-light">
             {t('portfolioDesc')}
           </p>
         </motion.div>
 
-        {/* Mobile Swipe Indicator */}
-        <div className="flex md:hidden items-center justify-center gap-2 mb-6 text-gray-400 animate-pulse">
-          <div className="w-8 h-px bg-gray-600" />
-          <span className="text-xs uppercase tracking-[0.2em] font-bold">{language === 'cs' ? 'přetáhněte doprava' : 'swipe right'}</span>
-          <div className="w-8 h-px bg-gray-600" />
-        </div>
-
-        {/* Flex Grid / Mobile Slider */}
-        <div className="flex flex-nowrap md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto overflow-y-hidden md:overflow-visible pb-8 pt-4 md:py-8 snap-x snap-mandatory no-scrollbar -mx-6 px-6 md:mx-0 md:px-0">
-          {PROJECTS.map((rawProject, index) => {
-            const project = getLocalizedProject(rawProject);
+        {/* Category filter */}
+        <motion.div
+          {...blurInRise(0.08)}
+          role="group"
+          aria-label={t('portfolioCategoryLabel')}
+          className="flex flex-wrap items-center gap-2 mb-8 md:mb-12"
+        >
+          {filters.map(({ key, label }) => {
+            const isActive = filter === key;
             return (
-              <div key={project.id} className="min-w-[85vw] md:min-w-0 snap-center">
-                <GalleryItem project={project} index={index} onSelectProject={handleSelectProject} />
-              </div>
+              <button
+                key={key}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setFilter(key)}
+                className={`focus-ring relative rounded-full px-5 py-2.5 font-display font-medium text-sm transition-colors duration-500 ${
+                  isActive ? 'text-white' : 'glass-pill text-ink-2 hover:text-ink'
+                }`}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="portfolio-filter-active"
+                    transition={{ duration: 0.6, ease: EASE_OUT }}
+                    className="absolute inset-0 rounded-full bg-[linear-gradient(160deg,#A24DB8_0%,#5B2769_100%)] border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_28px_rgba(162,77,184,0.45)]"
+                    aria-hidden
+                  />
+                )}
+                <span className="relative">{label}</span>
+              </button>
             );
           })}
-        </div>
-        
-        {/* 'More' Button */}
-        <div className="mt-20 flex justify-center">
-            <motion.a 
-                href="#contact"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
-                className="group flex items-center gap-3 px-8 py-4 rounded-full border border-white/10 md:hover:border-secondary/50 md:hover:bg-secondary/10 transition-all duration-500"
-            >
-                <span className="text-white font-medium">{t('portfolioContactBtn') || (language === 'cs' ? 'Kontaktujte nás' : 'Contact us')}</span>
-                <ArrowUpRight className="w-4 h-4 text-secondary md:group-hover:translate-x-1 md:group-hover:-translate-y-1 transition-transform duration-500" />
-            </motion.a>
+        </motion.div>
+
+        {/* Mobile Swipe Indicator */}
+        <div className="flex md:hidden items-center gap-3 mb-5 text-ink-3" aria-hidden>
+          <span className="w-8 h-px bg-gradient-to-r from-transparent to-orchid-soft/60" />
+          <span className="font-display text-[11px] uppercase tracking-[0.22em] font-medium">{language === 'cs' ? 'přetáhněte doprava' : 'swipe right'}</span>
+          <ArrowRight className="w-3.5 h-3.5 text-orchid-soft" />
         </div>
 
-        {/* Project Modal */}
+        {/* Grid / Mobile Slider */}
+        <motion.ul
+          layout
+          className="flex flex-nowrap md:grid md:grid-cols-2 gap-5 md:gap-x-8 md:gap-y-14 overflow-x-auto overflow-y-hidden md:overflow-visible pb-6 md:pb-0 snap-x snap-mandatory no-scrollbar -mx-6 px-6 scroll-px-6 md:mx-0 md:px-0"
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            {visibleProjects.map((rawProject, index) => {
+              const project = getLocalizedProject(rawProject);
+              return (
+                <motion.li
+                  key={project.id}
+                  layout
+                  initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(8px)' }}
+                  transition={{ duration: 0.7, ease: EASE_OUT, delay: Math.min(index, 3) * 0.06 }}
+                  className="w-[84vw] max-w-[420px] shrink-0 md:w-auto md:max-w-none snap-start"
+                >
+                  <GalleryItem project={project} index={index} onSelectProject={handleSelectProject} />
+                </motion.li>
+              );
+            })}
+          </AnimatePresence>
+        </motion.ul>
+
+        {/* 'More' Button */}
+        <motion.div {...blurInRise(0.1)} className="mt-14 md:mt-20 flex justify-center">
+          <a
+            href="#contact"
+            className="btn-glass focus-ring group inline-flex items-center gap-3 px-8 py-4 rounded-full font-display font-medium"
+          >
+            <span>{t('portfolioContactBtn') || (language === 'cs' ? 'Kontaktujte nás' : 'Contact us')}</span>
+            <ArrowUpRight className="w-4 h-4 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+          </a>
+        </motion.div>
+
+        {/* Project Lightbox */}
         {typeof document !== 'undefined' && createPortal(
           <AnimatePresence>
             {hasSelectedProject && activeProject && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center md:p-6">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  onClick={() => setSelectedProject(null)}
-                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                  transition={{ duration: 0.5, ease: EASE_OUT }}
+                  onClick={closeModal}
+                  className="absolute inset-0 bg-[#050308]/85 backdrop-blur-md"
+                  aria-hidden
                 />
+                <div className="hidden md:block absolute w-[70vw] h-[60vh] glow-plum rounded-full pointer-events-none" aria-hidden />
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="relative w-full h-full md:h-auto md:max-w-6xl md:max-h-[85vh] bg-[#050205] md:border md:border-white/5 md:rounded-3xl shadow-[0_0_80px_rgba(101,36,111,0.15)] z-10 flex flex-col md:flex-row overflow-hidden"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="project-modal-title"
+                  initial={{ opacity: 0, y: 28, filter: 'blur(12px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+                  transition={{ duration: 0.7, ease: EASE_OUT }}
+                  className="relative w-full h-full md:h-auto md:max-w-6xl md:max-h-[86vh] z-10 flex flex-col md:flex-row overflow-hidden md:rounded-card-lg bg-[linear-gradient(160deg,rgba(67,32,79,0.72)_0%,rgba(20,10,26,0.94)_55%,rgba(10,5,14,0.96)_100%)] backdrop-blur-[28px] md:border-[1.5px] md:border-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_30px_80px_rgba(0,0,0,0.6),0_0_90px_rgba(162,77,184,0.22)]"
                 >
                   <button
+                    ref={closeBtnRef}
                     type="button"
-                    onClick={() => setSelectedProject(null)}
-                    className="absolute top-3 right-3 md:top-4 md:right-4 p-2 md:p-3 bg-black/50 backdrop-blur-md hover:bg-white/10 rounded-full text-white transition-all z-[110] border border-white/10 outline-none focus:outline-none focus:ring-0 select-none"
+                    onClick={closeModal}
+                    aria-label={t('portfolioCloseBtn')}
+                    className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute top-3 right-3 md:top-5 md:right-5 w-11 h-11 rounded-full flex items-center justify-center z-[110] select-none"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    <X className="w-4 h-4 md:w-5 md:h-5" />
+                    <X className="w-5 h-5" aria-hidden />
                   </button>
-                  
-                  {/* Left: Image & Thumbnails */}
-                  <div className="w-full md:w-[60%] flex flex-col shrink-0 border-b md:border-b-0 md:border-r border-white/5 relative bg-black">
-                    <div className="relative flex-grow min-h-[30vh] sm:min-h-[35vh] md:min-h-[500px]">
-                      <motion.img 
-                        key={selectedImageIndex}
-                        loading="lazy"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.4 }}
-                        src={activeProject.galleryUrls?.[selectedImageIndex] || activeProject.imageUrl} 
-                        alt={`${activeProject.title} - ${activeProject.location} - Detail vizualizace`} 
-                        className="absolute inset-0 w-full h-full object-cover" 
-                        referrerPolicy="no-referrer"
-                      />
-                      {/* Gradient overlays to blend into background */}
-                      <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#050205] to-transparent opacity-90 pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#050205] via-transparent to-transparent opacity-60 pointer-events-none" />
-                    </div>
-                    
-                    {activeProject.galleryUrls && activeProject.galleryUrls.length > 1 && (
-                      <div className="absolute bottom-4 md:bottom-6 left-0 w-full flex justify-center gap-2 md:gap-3 px-4 md:px-6 overflow-x-auto no-scrollbar z-20">
-                        {activeProject.galleryUrls.map((url, idx) => (
+
+                  {/* Left: Image, arrows & thumbnails */}
+                  <div className="w-full md:w-[60%] flex flex-col shrink-0 relative md:p-3">
+                    <div className="relative flex-grow min-h-[36vh] sm:min-h-[40vh] md:min-h-[540px] overflow-hidden md:rounded-[26px] bg-plum-black">
+                      <AnimatePresence initial={false}>
+                        <motion.img
+                          key={selectedImageIndex}
+                          initial={{ opacity: 0, filter: 'blur(8px)' }}
+                          animate={{ opacity: 1, filter: 'blur(0px)' }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.7, ease: EASE_OUT }}
+                          src={gallery[selectedImageIndex]}
+                          alt={`${activeProject.title} - ${activeProject.location} - Detail vizualizace`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </AnimatePresence>
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a050e]/80 via-transparent to-transparent pointer-events-none" />
+
+                      {gallery.length > 1 && (
+                        <>
                           <button
-                            key={idx}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedImageIndex(idx);
-                            }}
-                            aria-label={`View image ${idx + 1}`}
-                            className={`relative shrink-0 w-12 h-10 md:w-20 md:h-14 rounded overflow-hidden transition-all duration-300 ${
-                              selectedImageIndex === idx 
-                                ? 'ring-2 ring-secondary ring-offset-2 ring-offset-[#050205] opacity-100' 
-                                : 'opacity-40 md:hover:opacity-100 border border-white/10'
-                            }`}
+                            type="button"
+                            onClick={showPrev}
+                            aria-label={language === 'cs' ? 'Předchozí obrázek' : 'Previous image'}
+                            className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute left-3 md:left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center z-20"
                           >
-                            <img 
-                              loading="lazy"
-                              src={url} 
-                              alt={`${activeProject.title} - ${idx + 1}`} 
-                              className="w-full h-full object-cover" 
-                              referrerPolicy="no-referrer"
-                            />
+                            <ChevronLeft className="w-5 h-5" aria-hidden />
                           </button>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            type="button"
+                            onClick={showNext}
+                            aria-label={language === 'cs' ? 'Další obrázek' : 'Next image'}
+                            className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute right-3 md:right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center z-20"
+                          >
+                            <ChevronRight className="w-5 h-5" aria-hidden />
+                          </button>
+
+                          <div className="absolute top-4 left-4 md:top-5 md:left-5 z-20 border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full px-3 py-1 font-display font-medium text-xs text-ink tabular-nums" aria-live="polite">
+                            {pad(selectedImageIndex + 1)} <span className="text-ink-3">/ {pad(gallery.length)}</span>
+                          </div>
+
+                          <div className="absolute bottom-4 md:bottom-5 left-0 w-full flex justify-center z-20 px-4">
+                            <div className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full flex gap-2 p-1.5 max-w-full overflow-x-auto no-scrollbar">
+                              {gallery.map((url, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedImageIndex(idx);
+                                  }}
+                                  aria-label={language === 'cs' ? `Zobrazit obrázek ${idx + 1}` : `View image ${idx + 1}`}
+                                  aria-current={selectedImageIndex === idx}
+                                  className={`focus-ring relative shrink-0 w-12 h-9 md:w-16 md:h-11 rounded-full overflow-hidden transition-all duration-500 ${
+                                    selectedImageIndex === idx
+                                      ? 'ring-2 ring-orchid-soft shadow-[0_0_14px_rgba(196,139,224,0.6)] opacity-100'
+                                      : 'opacity-50 hover:opacity-100'
+                                  }`}
+                                >
+                                  <img
+                                    loading="lazy"
+                                    src={url}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  
+
                   {/* Right: Text Content */}
-                  <div className="w-full md:w-[40%] p-5 sm:p-6 md:p-14 flex flex-col justify-center relative bg-gradient-to-br from-[#0a050a] to-[#050205] overflow-y-auto no-scrollbar">
-                    <div className="flex flex-wrap items-center gap-2 mb-3 md:mb-6">
-                      <span className="px-2.5 py-1 md:px-3 md:py-1 bg-secondary/10 border border-secondary/20 text-secondary rounded shadow-[0_0_15px_rgba(101,36,111,0.2)] text-[9px] md:text-xs font-bold tracking-widest uppercase font-display">
-                        {activeProject.category}
-                      </span>
-                    </div>
-                    
-                    <h3 className="text-2xl md:text-5xl font-display font-bold text-white mb-3 md:mb-4 leading-tight drop-shadow-lg">
-                      {activeProject.title}
-                    </h3>
-                    
-                    <div className="flex items-center gap-2 text-gray-300 mb-4 md:mb-8 text-xs sm:text-sm md:text-base font-medium">
-                      <MapPin className="w-3.5 h-3.5 md:w-5 md:h-5 text-secondary" />
-                      <span>{activeProject.location}</span>
-                    </div>
-                    
-                    <div className="h-px w-12 md:w-16 bg-gradient-to-r from-secondary to-transparent mb-4 md:mb-8" />
-                    
-                    <p className="text-gray-400 leading-relaxed text-xs sm:text-sm md:text-base mb-6 md:mb-12 flex-grow font-light">
-                      {activeProject.description}
-                    </p>
-                    
-                    {/* Call to action */}
-                    <div className="pt-4 md:pt-6 border-t border-white/5 mt-auto">
-                      <p className="text-xs md:text-sm text-secondary font-bold tracking-widest uppercase mb-2 md:mb-4">
-                        {language === 'cs' ? 'Líbí se vám tento projekt?' : 'Do you like this project?'}
+                  <div className="relative w-full md:w-[40%] flex-1 md:flex-none p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto no-scrollbar">
+                    <div className="absolute inset-0 glass-inner-glow opacity-70 pointer-events-none" aria-hidden />
+                    <div className="relative flex flex-col flex-grow">
+                      <div className="mb-4 md:mb-6">
+                        <span className="glass-pill inline-flex px-3.5 py-1.5 font-display font-medium text-xs text-orchid-pale">
+                          {activeProject.category}
+                        </span>
+                      </div>
+
+                      <h3 id="project-modal-title" className="font-display font-bold text-ink text-3xl md:text-[44px] tracking-tightest leading-[1.08] mb-3 md:mb-4 pr-12 md:pr-0">
+                        {activeProject.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-ink-2 mb-5 md:mb-7 text-sm md:text-base">
+                        <MapPin className="w-4 h-4 icon-gradient shrink-0" strokeWidth={1.75} aria-hidden />
+                        <span className="sr-only">{t('portfolioLocationLabel')}: </span>
+                        <span>{activeProject.location}</span>
+                      </div>
+
+                      <div className="h-px w-14 bg-gradient-to-r from-orchid-soft to-transparent mb-5 md:mb-7" aria-hidden />
+
+                      <p className="text-ink-2 leading-relaxed text-sm md:text-base mb-8 md:mb-10 flex-grow font-light">
+                        {activeProject.description}
                       </p>
-                      <a 
-                        href="#contact"
-                        onClick={() => setSelectedProject(null)}
-                        className="group flex items-center justify-between w-full px-4 py-3 md:px-6 md:py-4 bg-white md:hover:bg-gray-100 text-black rounded-lg font-bold transition-all shadow-[0_4px_20px_rgba(255,255,255,0.1)] md:hover:shadow-[0_4px_25px_rgba(255,255,255,0.2)] text-sm md:text-base mb-3"
-                      >
-                        {language === 'cs' ? 'Mám zájem o spolupráci' : 'I am interested in collaboration'}
-                        <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </a>
-                      <button
-                        onClick={() => setSelectedProject(null)}
-                        className="w-full py-2 text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        {t('portfolioCloseBtn')}
-                      </button>
+
+                      {/* Call to action */}
+                      <div className="pt-5 md:pt-6 border-t border-white/10 mt-auto">
+                        <p className="eyebrow block mb-3 md:mb-4">
+                          {language === 'cs' ? 'Líbí se vám tento projekt?' : 'Do you like this project?'}
+                        </p>
+                        <div className="flex flex-col gap-2.5">
+                          <a
+                            href="#contact"
+                            onClick={closeModal}
+                            className="btn-primary focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
+                          >
+                            {language === 'cs' ? 'Mám zájem o spolupráci' : 'I am interested in collaboration'}
+                            <ArrowUpRight className="w-5 h-5 shrink-0 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={closeModal}
+                            className="focus-ring w-full py-2.5 rounded-full font-display text-sm text-ink-3 hover:text-ink transition-colors duration-300"
+                          >
+                            {t('portfolioCloseBtn')}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -304,181 +431,69 @@ export const PortfolioGallery: React.FC = () => {
   );
 };
 
+// Calm portfolio card: big photo (28px radius), slow <=1.04 zoom and a soft plum glow on hover
 const GalleryItem: React.FC<{ project: ProjectItem; index: number; onSelectProject: (p: ProjectItem) => void }> = ({ project, index, onSelectProject }) => {
   const { language } = useLanguage();
-  const [isHovered, setIsHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // Motion values for smoother tilt
-  const mouseX = useMotionValue(0.5);
-  const mouseY = useMotionValue(0.5);
-  const springX = useSpring(mouseX, { stiffness: 100, damping: 25 });
-  const springY = useSpring(mouseY, { stiffness: 100, damping: 25 });
-  const rotateX = useTransform(springY, [0, 1], [8, -8]);
-  const rotateY = useTransform(springX, [0, 1], [-8, 8]);
-
-  // Motion values for subtle flashlight
-  const touchX = useMotionValue(0);
-  const touchY = useMotionValue(0);
-  const smoothTouchX = useSpring(touchX, { stiffness: 60, damping: 20 });
-  const smoothTouchY = useSpring(touchY, { stiffness: 60, damping: 20 });
-  const spotlight = useMotionTemplate`radial-gradient(400px circle at ${smoothTouchX}px ${smoothTouchY}px, rgba(255,255,255,0.06), transparent 80%)`;
-
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || window.innerWidth < 768) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    
-    // Normalize coordinates to 0 -> 1 for tilt
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    mouseX.set(x);
-    mouseY.set(y);
-
-    // Pixel coordinates for flashlight
-    touchX.set(e.clientX - rect.left);
-    touchY.set(e.clientY - rect.top);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    mouseX.set(0.5);
-    mouseY.set(0.5);
-  };
+  const viewLabel = language === 'cs' ? 'Zobrazit studii' : 'View study';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ 
-        ...springTransition,
-        delay: index * 0.1 
-      }}
-      className="relative group cursor-pointer w-full flex flex-col"
-      style={{ perspective: '1200px' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={handleMouseLeave}
-      onMouseMove={handleMouseMove}
-      onClick={() => onSelectProject(project)}
-    >
-      <motion.div 
-        className="relative w-full flex-grow aspect-[4/5]" 
-        ref={cardRef}
-        style={{
-          rotateX: isHovered && window.innerWidth >= 768 ? rotateX : 0,
-          rotateY: isHovered && window.innerWidth >= 768 ? rotateY : 0,
-        }}
-        animate={{ 
-          scale: isHovered && window.innerWidth >= 768 ? 1.02 : 1
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      >
-        <motion.div
-          animate={{ rotateY: isHovered && window.innerWidth >= 768 ? 180 : 0 }}
-          transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }} 
-          className="w-full h-full relative"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          {/* ==================== FRONT FACE ==================== */}
-          <div 
-            className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden backface-hidden"
-            style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-          >
-            {/* Image */}
-            <div className="relative w-full h-full bg-gray-900">
-              <motion.img 
-                loading="lazy"
-                src={project.imageUrl} 
-                alt={`Projekt ${project.title} - ${project.category}, ${project.location}`}
-                className="w-full h-full object-cover"
-                transition={{ duration: 0.8 }}
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
-            </div>
+    <article className="group relative w-full">
+      {/* Stretched button: the whole card opens the lightbox */}
+      <button
+        type="button"
+        onClick={() => onSelectProject(project)}
+        aria-label={`${viewLabel}: ${project.title}, ${project.location}`}
+        className="absolute inset-0 z-20 w-full rounded-card focus-ring cursor-pointer"
+      />
+      {/* Photo */}
+      <div className="relative">
+        {/* Glow that blooms behind the photo on hover */}
+        <div className="absolute inset-6 rounded-card glow-plum opacity-0 md:group-hover:opacity-100 transition-opacity duration-1000" aria-hidden />
+        <div className="relative aspect-[4/5] md:aspect-[4/3] overflow-hidden rounded-card bg-plum-black border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.55)] transition-[box-shadow,border-color] duration-700 md:group-hover:border-white/20 md:group-hover:shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(162,77,184,0.35)]">
+          <img
+            loading="lazy"
+            src={project.imageUrl}
+            alt={`Projekt ${project.title} - ${project.category}, ${project.location}`}
+            className="w-full h-full object-cover transition-transform duration-[2200ms] ease-[cubic-bezier(0.16,1,0.3,1)] md:group-hover:scale-[1.04]"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050308]/70 via-transparent to-transparent pointer-events-none" />
 
-            {/* Front Static Content */}
-            <div className="absolute bottom-0 left-0 w-full p-6 z-10">
-                 <div className="flex justify-between items-end">
-                    <div>
-                        <span className="text-secondary text-xs font-bold tracking-widest uppercase mb-2 block font-display">{project.category}</span>
-                        <h3 className="text-xl md:text-2xl font-display font-bold text-white leading-tight">{project.title}</h3>
-                    </div>
-                    <div className="p-3 bg-white/5 backdrop-blur-md rounded-full border border-white/10 md:group-hover:bg-white/10 transition-colors">
-                        <ArrowUpRight className="w-5 h-5 text-white" />
-                    </div>
-                 </div>
-            </div>
-          </div>
+          <span className="absolute top-4 left-4 border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full px-3.5 py-1.5 font-display font-medium text-xs text-ink">
+            {project.category}
+          </span>
+          <span className="absolute top-4 right-4 border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full w-11 h-11 flex items-center justify-center transition-[background-color,box-shadow] duration-500 md:group-hover:bg-[rgba(162,77,184,0.5)] md:group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_0_24px_rgba(196,139,224,0.45)]" aria-hidden>
+            <ArrowUpRight className="w-5 h-5 text-ink transition-transform duration-700 md:group-hover:translate-x-0.5 md:group-hover:-translate-y-0.5" />
+          </span>
+          <span className="absolute bottom-4 left-5 font-display font-medium text-xs tracking-[0.22em] text-ink/80 tabular-nums" aria-hidden>
+            {pad(Number(project.id) || index + 1)}
+          </span>
+        </div>
+      </div>
 
-          {/* ==================== BACK FACE ==================== */}
-          <div 
-            className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden bg-[#0a050a] border border-white/10 shadow-2xl"
-            style={{ 
-              transform: 'rotateY(180deg)', 
-              backfaceVisibility: 'hidden', 
-              WebkitBackfaceVisibility: 'hidden' 
-            }}
-          >
-            {/* Elegant Grid Pattern */}
-            <div 
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-              }}
-            />
-            
-            {/* Subtle Spotlight Effect */}
-            <motion.div 
-              className="absolute inset-0 pointer-events-none transition-opacity duration-500"
-              style={{
-                background: spotlight,
-                opacity: isHovered ? 1 : 0
-              }}
-            />
-
-            {/* Back Content */}
-            <div className="relative z-10 h-full p-6 md:p-8 flex flex-col overflow-y-auto">
-              <div className="flex justify-between items-start mb-4 shrink-0">
-                 <div className="p-2 bg-white/10 rounded-full border border-white/20 text-white shadow-xl">
-                   <Tag className="w-4 h-4 text-secondary drop-shadow-md" />
-                 </div>
-                 <span className="text-xs uppercase tracking-widest text-gray-300 font-bold drop-shadow-sm bg-[#0a050a]/50 px-2 py-1 rounded backdrop-blur-sm font-display">{project.category}</span>
-              </div>
-              
-              <div className="flex-grow flex flex-col justify-center gap-3 md:gap-4 my-2">
-                <h3 className="text-2xl md:text-3xl font-display font-bold text-white leading-tight drop-shadow-xl">
-                  {project.title}
-                </h3>
-                
-                <div className="flex items-center gap-2 text-sm text-gray-200 drop-shadow-md">
-                  <MapPin className="w-4 h-4 text-secondary shrink-0 drop-shadow-md relative z-10" />
-                  <span className="truncate font-medium">{project.location}</span>
-                </div>
-
-                <div className="h-px w-12 bg-secondary/80 my-1 md:my-2 shrink-0 shadow-[0_0_10px_rgba(101,36,111,0.8)]" />
-
-                <p className="text-white leading-relaxed text-sm font-light drop-shadow-md">
-                  {project.description}
-                </p>
-              </div>
-
-              <div className="mt-auto pt-4 shrink-0">
-                 <button 
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     onSelectProject(project);
-                   }}
-                   className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-purple-100 transition-colors text-sm shadow-[0_4px_20px_rgba(255,255,255,0.25)] ring-1 ring-white/50"
-                 >
-                   {language === 'cs' ? 'Zobrazit studii' : 'View study'}
-                 </button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+      {/* Caption */}
+      <div className="pt-5 md:pt-6 px-1">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-display font-bold text-ink text-xl md:text-2xl tracking-tightest leading-tight">
+            {project.title}
+          </h3>
+          <span className="hidden md:inline-flex items-center gap-1.5 shrink-0 pt-1 font-display font-medium text-sm text-orchid-soft transition-colors duration-300 group-hover:text-orchid-pink" aria-hidden>
+            {viewLabel}
+            <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-0.5" />
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2 text-ink-3 text-sm">
+          <MapPin className="w-3.5 h-3.5 icon-gradient shrink-0" strokeWidth={1.75} aria-hidden />
+          <span>{project.location}</span>
+        </div>
+        <p className="mt-3 text-ink-2 text-sm md:text-[15px] font-light leading-relaxed line-clamp-2 max-w-xl">
+          {project.description}
+        </p>
+        <span className="md:hidden inline-flex items-center gap-1.5 mt-4 font-display font-medium text-sm text-orchid-soft" aria-hidden>
+          {viewLabel}
+          <ArrowRight className="w-4 h-4" />
+        </span>
+      </div>
+    </article>
   );
 };
