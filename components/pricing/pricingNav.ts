@@ -24,7 +24,8 @@ export type ServiceOptionId =
   | 'floor-3d'
   | 'floor-2d'
   | 'tour'
-  | 'web';
+  | 'web'
+  | 'video';
 
 const CONTACT_SERVICE_EVENT = 'innervisio:contact-service';
 

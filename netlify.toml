@@ -149,3 +149,12 @@
   for = "/llms.txt"
   [headers.values]
     Content-Type = "text/plain; charset=utf-8"
+
+[[headers]]
+  for = "/AIVizualizace/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+[[headers]]
+  for = "/video/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"

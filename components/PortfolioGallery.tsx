@@ -44,6 +44,30 @@ const PROJECT_TRANSLATIONS: Record<Language, Record<string, { title: string; loc
        location: 'Litvínov, ČR',
        category: 'Exteriér',
        description: 'Na místě původní střechy vznikla nástavba s dalším patrem, novými byty a terasou. Detaily byly navrženy tak, aby budoucí majitelé viděli, jak bude jejich nový domov vypadat.'
+    },
+    '7': {
+       title: 'Rekonstrukce venkovského domu',
+       location: 'ČR',
+       category: 'AI vizualizace',
+       description: 'Z fotky zchátralého domu vznikla AI vizualizace hotové rekonstrukce. Stejný záběr, stejná geometrie. Na druhém snímku najdete stav před.'
+    },
+    '8': {
+       title: 'Terasa s pergolou a zahrada',
+       location: 'ČR',
+       category: 'AI vizualizace',
+       description: 'AI vizualizace exteriéru: zastřešená terasa, ohniště a zahrada ve světle zapadajícího slunce.'
+    },
+    '9': {
+       title: 'Obývací pokoj v zelených tónech',
+       location: 'ČR',
+       category: 'AI vizualizace',
+       description: 'AI vizualizace interiéru s měkkým denním světlem, přírodními materiály a výrazným akcentem v olivové barvě.'
+    },
+    '10': {
+       title: 'Ložnice v teplých tónech',
+       location: 'ČR',
+       category: 'AI vizualizace',
+       description: 'AI vizualizace ložnice s vestavěnou šatnou, jemným osvětlením a lehkými záclonami.'
     }
   },
   en: {
@@ -82,12 +106,36 @@ const PROJECT_TRANSLATIONS: Record<Language, Record<string, { title: string; loc
        location: 'Litvinov, CZ',
        category: 'Exterior',
        description: 'Constructing another modern residential floor directly top of the classic brick roof, equipped with spacious terraces. Designed for prospective buyers to explore materials.'
+    },
+    '7': {
+       title: 'Country House Renovation',
+       location: 'CZ',
+       category: 'AI visualization',
+       description: 'From a photo of a run-down house we created an AI visualization of the finished renovation. Same viewpoint, same geometry. The second image shows the state before.'
+    },
+    '8': {
+       title: 'Pergola Terrace and Garden',
+       location: 'CZ',
+       category: 'AI visualization',
+       description: 'AI exterior visualization: a covered terrace, fire pit and garden in the light of the setting sun.'
+    },
+    '9': {
+       title: 'Living Room in Green Tones',
+       location: 'CZ',
+       category: 'AI visualization',
+       description: 'AI interior visualization with soft daylight, natural materials and a bold olive accent.'
+    },
+    '10': {
+       title: 'Bedroom in Warm Tones',
+       location: 'CZ',
+       category: 'AI visualization',
+       description: 'AI bedroom visualization with a built-in wardrobe, soft lighting and light curtains.'
     }
   }
 };
 
 // Filter keys map onto the raw (Czech) categories in constants
-type CategoryFilter = 'all' | 'Exteriér' | 'Interiér';
+type CategoryFilter = 'all' | 'Exteriér' | 'Interiér' | 'AI vizualizace';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -148,6 +196,7 @@ export const PortfolioGallery: React.FC = () => {
     { key: 'all', label: t('portfolioCatAll') },
     { key: 'Exteriér', label: t('portfolioCatExterier') },
     { key: 'Interiér', label: t('portfolioCatInterier') },
+    { key: 'AI vizualizace', label: language === 'cs' ? 'AI vizualizace' : 'AI visualization' },
   ];
   const visibleProjects = PROJECTS.filter((p) => filter === 'all' || p.category === filter);
 
@@ -373,13 +422,7 @@ export const PortfolioGallery: React.FC = () => {
                   <div className="relative w-full md:w-[40%] flex-1 md:flex-none p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto no-scrollbar">
                     <div className="absolute inset-0 glass-inner-glow opacity-70 pointer-events-none" aria-hidden />
                     <div className="relative flex flex-col flex-grow">
-                      <div className="mb-4 md:mb-6">
-                        <span className="glass-pill inline-flex px-3.5 py-1.5 font-display font-medium text-xs text-orchid-pale">
-                          {activeProject.category}
-                        </span>
-                      </div>
-
-                      <h3 id="project-modal-title" className="font-display font-bold text-ink text-3xl md:text-[44px] tracking-tightest leading-[1.08] mb-3 md:mb-4 pr-12 md:pr-0">
+                      <h3 id="project-modal-title" className="font-display font-bold text-ink text-3xl md:text-[44px] tracking-tightest leading-[1.08] mb-3 md:mb-4 pr-12 md:pr-0 md:mt-4">
                         {activeProject.title}
                       </h3>
 
@@ -387,6 +430,9 @@ export const PortfolioGallery: React.FC = () => {
                         <MapPin className="w-4 h-4 icon-gradient shrink-0" strokeWidth={1.75} aria-hidden />
                         <span className="sr-only">{t('portfolioLocationLabel')}: </span>
                         <span>{activeProject.location}</span>
+                        <span className="text-ink-3" aria-hidden>·</span>
+                        <span className="sr-only">{t('portfolioCategoryLabel')}: </span>
+                        <span>{activeProject.category}</span>
                       </div>
 
                       <div className="h-px w-14 bg-gradient-to-r from-orchid-soft to-transparent mb-5 md:mb-7" aria-hidden />
@@ -459,9 +505,6 @@ const GalleryItem: React.FC<{ project: ProjectItem; index: number; onSelectProje
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050308]/70 via-transparent to-transparent pointer-events-none" />
 
-          <span className="absolute top-4 left-4 border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full px-3.5 py-1.5 font-display font-medium text-xs text-ink">
-            {project.category}
-          </span>
           <span className="absolute top-4 right-4 border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-full w-11 h-11 flex items-center justify-center transition-[background-color,box-shadow] duration-500 md:group-hover:bg-[rgba(162,77,184,0.5)] md:group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.4),0_0_24px_rgba(196,139,224,0.45)]" aria-hidden>
             <ArrowUpRight className="w-5 h-5 text-ink transition-transform duration-700 md:group-hover:translate-x-0.5 md:group-hover:-translate-y-0.5" />
           </span>

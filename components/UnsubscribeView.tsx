@@ -172,7 +172,7 @@ export function UnsubscribeView({ emailParam, onGoBack }: UnsubscribeViewProps) 
 
       {/* Contact always visible */}
       <motion.p {...blurInOnMount(0.2)} className="relative z-10 mt-8 text-sm text-ink-3 font-light text-center">
-        Dotazy? <a href="mailto:innervisio@gmail.com" className="link-orchid focus-ring rounded font-medium">innervisio@gmail.com</a>
+        Dotazy? <a href="mailto:zakazky@innervisio.cz" className="link-orchid focus-ring rounded font-medium">zakazky@innervisio.cz</a>
       </motion.p>
     </div>
   );

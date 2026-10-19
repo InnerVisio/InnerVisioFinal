@@ -4,13 +4,24 @@ import { Menu, X } from 'lucide-react';
 import { useLanguage } from './LanguageContext';
 import { EASE_OUT } from './ui/brand';
 
-// isNew items deep-link into a tab of another section, so the scroll spy skips them
-const LOCALIZED_NAV_ITEMS = [
-  { labelKey: 'servicesLabel', href: '#services' },
-  { labelKey: 'workLabel', href: '#work' },
-  { labelKey: 'aiVizLabel', href: '#pricing-ai', isNew: true },
-  { labelKey: 'pricingLabel', href: '#pricing' },
-  { labelKey: 'faqLabel', href: '#faq' },
+interface NavItem {
+  id: string;
+  labelKey?: string;
+  label?: Record<'cs' | 'en', string>;
+  href: string;
+  isNew?: boolean;
+  isPage?: boolean;
+}
+
+// isNew items deep-link into a tab of another section, so the scroll spy skips them.
+// isPage items are separate pages (not in-page anchors): no homePrefix, no scroll spy.
+const LOCALIZED_NAV_ITEMS: NavItem[] = [
+  { id: 'services', labelKey: 'servicesLabel', href: '#services' },
+  { id: 'work', labelKey: 'workLabel', href: '#work' },
+  { id: 'pricing-ai', labelKey: 'aiVizLabel', href: '#pricing-ai', isNew: true },
+  { id: 'pricing', labelKey: 'pricingLabel', href: '#pricing' },
+  { id: 'faq', labelKey: 'faqLabel', href: '#faq' },
+  { id: 'socials', label: { cs: 'Socials', en: 'Socials' }, href: '/socials', isPage: true },
 ];
 
 // Sporadic magenta accent (brand: tiny dots only)
@@ -34,17 +45,31 @@ const navItemVariants: Variants = {
 };
 
 const desktopLangBtn = (active: boolean) =>
+  // design-rule-ok: these are the language-switch buttons (a real control), not a decorative label
   `focus-ring px-3 py-1.5 rounded-full font-display text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300 ${
     active
       ? 'bg-[rgba(162,77,184,0.45)] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_16px_rgba(162,77,184,0.45)]'
       : 'text-ink-3 hover:text-ink'
   }`;
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  /** '' on the home page; '/' on sub-pages so in-page anchors become '/#services' */
+  homePrefix?: string;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ homePrefix = '' }) => {
   const { language, setLanguage, t } = useLanguage();
+  const [onSocials, setOnSocials] = useState(false);
+  const hrefFor = (item: NavItem) => (item.isPage ? item.href : `${homePrefix}${item.href}`);
+  const labelFor = (item: NavItem) => (item.label ? item.label[language] : t(item.labelKey as string));
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+
+  // Read from window in an effect so prerendering never touches it
+  useEffect(() => {
+    setOnSocials(window.location.pathname.startsWith('/socials'));
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -55,7 +80,7 @@ export const Navbar: React.FC = () => {
           setIsScrolled(window.scrollY > 20);
 
           // Simple scroll spy logic
-          const sections = LOCALIZED_NAV_ITEMS.filter(item => !item.isNew).map(item => item.href.substring(1));
+          const sections = LOCALIZED_NAV_ITEMS.filter(item => !item.isNew && !item.isPage).map(item => item.href.substring(1));
           let current = '';
           for (const section of sections) {
             const element = document.getElementById(section);
@@ -96,7 +121,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between gap-4 w-full lg:grid lg:grid-cols-[1fr_auto_1fr]">
           {/* Logo + wordmark */}
           <a
-            href="#root"
+            href={homePrefix ? '/' : '#root'}
             aria-label="Home"
             className="focus-ring flex items-center gap-3 group/logo shrink-0 justify-self-start rounded-xl z-50"
           >
@@ -108,14 +133,9 @@ export const Navbar: React.FC = () => {
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-display font-semibold text-lg md:text-xl text-ink tracking-tightest leading-tight">
-                {t('footerTitle')}
-              </span>
-              <span className="font-display text-[10px] md:text-[11px] text-ink-3 font-medium uppercase tracking-[0.2em] leading-tight">
-                {t('logoSub')}
-              </span>
-            </div>
+            <span className="font-display font-semibold text-lg md:text-xl text-ink tracking-tightest leading-tight">
+              {t('footerTitle')}
+            </span>
           </a>
 
           {/* Desktop nav: liquid-glass pill bar */}
@@ -126,13 +146,13 @@ export const Navbar: React.FC = () => {
             animate="visible"
           >
             {LOCALIZED_NAV_ITEMS.map((item) => {
-              const isActive = activeSection === item.href.substring(1);
+              const isActive = item.isPage ? onSocials : activeSection === item.href.substring(1);
               return (
                 <motion.a
-                  key={item.labelKey}
-                  href={item.href}
+                  key={item.id}
+                  href={hrefFor(item)}
                   variants={navItemVariants}
-                  aria-current={isActive ? 'true' : undefined}
+                  aria-current={isActive ? (item.isPage ? 'page' : 'true') : undefined}
                   className={`focus-ring flex items-center gap-2 px-3.5 xl:px-[18px] py-2 rounded-full font-display text-[13px] xl:text-sm font-medium whitespace-nowrap transition-[background-color,color,box-shadow] duration-500 ${
                     isActive
                       ? 'bg-[rgba(162,77,184,0.38)] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_0_24px_rgba(162,77,184,0.5)]'
@@ -140,7 +160,7 @@ export const Navbar: React.FC = () => {
                   }`}
                 >
                   {item.isNew && <NewDot />}
-                  {t(item.labelKey)}
+                  {labelFor(item)}
                 </motion.a>
               );
             })}
@@ -170,7 +190,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             <a
-              href="#contact"
+              href={`${homePrefix}#contact`}
               className="btn-light focus-ring inline-flex items-center justify-center rounded-full font-display font-medium text-sm px-5 py-2.5 whitespace-nowrap"
             >
               {t('startProject')}
@@ -212,13 +232,13 @@ export const Navbar: React.FC = () => {
               <div className="absolute inset-0 glass-inner-glow pointer-events-none" aria-hidden />
 
               {LOCALIZED_NAV_ITEMS.map((item) => {
-                const isActive = activeSection === item.href.substring(1);
+                const isActive = item.isPage ? onSocials : activeSection === item.href.substring(1);
                 return (
                   <a
-                    key={item.labelKey}
-                    href={item.href}
+                    key={item.id}
+                    href={hrefFor(item)}
                     onClick={() => setMobileMenuOpen(false)}
-                    aria-current={isActive ? 'true' : undefined}
+                    aria-current={isActive ? (item.isPage ? 'page' : 'true') : undefined}
                     className={`focus-ring relative flex items-center gap-3 font-display text-lg font-medium px-4 py-3 rounded-2xl transition-colors duration-300 ${
                       isActive
                         ? 'bg-[rgba(162,77,184,0.3)] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]'
@@ -226,7 +246,7 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     {item.isNew && <NewDot />}
-                    {t(item.labelKey)}
+                    {labelFor(item)}
                   </a>
                 );
               })}
@@ -259,7 +279,7 @@ export const Navbar: React.FC = () => {
               </div>
 
               <a
-                href="#contact"
+                href={`${homePrefix}#contact`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="btn-light focus-ring relative mt-2 px-6 py-3.5 rounded-full font-display font-medium text-center"
               >

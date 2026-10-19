@@ -52,7 +52,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       aiVizLabel: "AI vizualizace",
       pricingLabel: "Ceník",
       faqLabel: "FAQ",
-      logoSub: "Architecture",
 
       // Hero Section
       heroAiChip: "Nově: AI vizualizace do 24 hodin",
@@ -126,7 +125,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       faqTabProcess: "Průběh & Spolupráce",
       faqTabPricing: "Ceny & Termíny",
       faqTabAi: "AI vizualizace",
-      newBadge: "Nové",
       faqFreeQuoteTitle: "Nezávazná nabídka zdarma",
       faqFreeQuoteDesc: "Zaslání a nacenění podkladů je plně zdarma a k ničemu vás nezavazuje. Ozveme se do 24 hodin.",
       faqDeadlinesTitle: "Dodržení termínů",
@@ -174,7 +172,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       aiVizLabel: "AI visualization",
       pricingLabel: "Pricing",
       faqLabel: "FAQ",
-      logoSub: "Architecture",
 
       // Hero Section
       heroAiChip: "New: AI visualizations within 24 hours",
@@ -248,7 +245,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       faqTabProcess: "Process & Cooperation",
       faqTabPricing: "Pricing & Timelines",
       faqTabAi: "AI visualization",
-      newBadge: "New",
       faqFreeQuoteTitle: "Free No-obligation Offer",
       faqFreeQuoteDesc: "Evaluating your blueprints and sending code estimates is fully free. We usually respond within 24 hours.",
       faqDeadlinesTitle: "Absolute Deadlines",

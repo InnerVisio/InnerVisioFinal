@@ -42,7 +42,7 @@ export const BRAND = {
   btnPrimary: 'btn-primary focus-ring inline-flex items-center justify-center gap-2 rounded-full font-display font-medium',
   btnGlass: 'btn-glass focus-ring inline-flex items-center justify-center gap-2 rounded-full font-display font-medium',
   btnLight: 'btn-light focus-ring inline-flex items-center justify-center gap-2 rounded-full font-display font-medium',
-  pill: 'glass-pill px-4 py-1.5 font-display font-medium text-sm text-ink',
-  badge: 'inline-flex items-center px-2.5 py-1 rounded-full bg-secondary text-white font-display font-semibold text-[10px] uppercase tracking-[0.14em] leading-none',
+  // Deliberately NO "pill"/"badge"/"tag" recipes: boxed labels (NEW, tags, category chips, "popular" badges)
+  // are banned site-wide, see CLAUDE.md. Use `.glass-pill` only for real controls (buttons, switchers).
   iconChip: 'icon-chip w-11 h-11 shrink-0',
 } as const;

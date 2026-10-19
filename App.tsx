@@ -10,14 +10,16 @@ import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { CookieBanner } from './components/CookieBanner';
 import { MobileCta } from './components/MobileCta';
+import { SocialsPage } from './components/SocialsPage';
+import { SocialsTeaser } from './components/SocialsTeaser';
 import { UnsubscribeView } from './components/UnsubscribeView';
 import { HERO_SLIDES } from './constants';
 import { Copy, Check, ArrowLeft } from 'lucide-react';
 import { EASE_OUT, EASE_IN_OUT } from './components/ui/brand';
 
-function App() {
-  // '/' when prerendering at build time (no window)
-  const [pathname, setPathname] = useState(typeof window === 'undefined' ? '/' : window.location.pathname);
+// initialPath is only used by the build-time prerender (no window); in the browser the real URL wins
+function App({ initialPath = '/' }: { initialPath?: string }) {
+  const [pathname, setPathname] = useState(typeof window === 'undefined' ? initialPath : window.location.pathname);
   const [currentSlide, setCurrentSlide] = useState(0);
   const { scrollY } = useScroll();
 
@@ -27,6 +29,9 @@ function App() {
     pathname === '/101-Exterier' || 
     pathname === '/email-image' || 
     pathname === '/email/101-exterier';
+
+  // /socials: video showcase with an Instagram/Facebook mockup (prerendered to dist/socials/index.html)
+  const isSocialsRoute = pathname === '/socials' || pathname === '/socials/';
 
   // Route matching for unsubscribe page
   const isUnsubscribeRoute = 
@@ -88,13 +93,14 @@ function App() {
   const y1 = useTransform(smoothY, [0, 1000], [0, 200]);
   const opacity = useTransform(smoothY, [0, 500], [1, 0.5]);
 
+  // Advance every 10 s; restarts after a manual selection so the hero's progress line stays in sync
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    const timer = setTimeout(() => {
+      setCurrentSlide((currentSlide + 1) % HERO_SLIDES.length);
     }, 10000);
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearTimeout(timer);
+  }, [currentSlide]);
 
   if (isEmailImageRoute) {
     return (
@@ -190,6 +196,18 @@ function App() {
     );
   }
 
+  if (isSocialsRoute) {
+    return (
+      <div className="relative min-h-screen bg-background selection:bg-secondary selection:text-white overflow-x-hidden">
+        <Navbar homePrefix="/" />
+        <SocialsPage />
+        <Footer homePrefix="/" />
+        <MobileCta />
+        <CookieBanner />
+      </div>
+    );
+  }
+
   if (isUnsubscribeRoute) {
     const searchParams = new URLSearchParams(window.location.search);
     const emailParam = searchParams.get('email') || '';
@@ -240,13 +258,13 @@ function App() {
 
         {/* Overlays, constant across slides: the photo stays the hero, but black dominates */}
         <div className="absolute inset-0 z-10 bg-[rgba(5,3,8,0.42)]" />
-        {/* Darker on the text side */}
-        <div className="absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(5,3,8,0.86)_0%,rgba(5,3,8,0.6)_42%,rgba(5,3,8,0.12)_100%)]" />
+        {/* Darker behind the text: from the left on wide screens, an even veil on phones where text spans the width */}
+        <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(5,3,8,0.5)_0%,rgba(5,3,8,0.35)_60%,rgba(5,3,8,0.5)_100%)] md:bg-[linear-gradient(90deg,rgba(5,3,8,0.86)_0%,rgba(5,3,8,0.6)_42%,rgba(5,3,8,0.12)_100%)]" />
         {/* Top shade behind the navbar */}
         <div className="absolute top-0 left-0 w-full h-48 z-10 bg-gradient-to-b from-[rgba(5,3,8,0.7)] to-transparent" />
         {/* Fade into the page background */}
         {/* (photo is gone by ~110vh so it never sits behind the next section's copy) */}
-        <div className="absolute inset-0 z-20 bg-[linear-gradient(180deg,rgba(5,3,8,0)_0%,rgba(5,3,8,0)_38%,rgba(5,3,8,0.82)_56%,#050308_68%)]" />
+        <div className="absolute inset-0 z-20 bg-[linear-gradient(180deg,rgba(5,3,8,0)_0%,rgba(5,3,8,0)_46%,rgba(5,3,8,0.82)_62%,#050308_72%)]" />
 
         {/* Ambient plum / orchid glows, drifting slowly (the hero glass sits on these) */}
         <div className="absolute z-20 -top-48 -right-40 w-[30rem] h-[30rem] md:w-[48rem] md:h-[48rem] rounded-full glow-plum animate-drift-slow" />
@@ -258,9 +276,7 @@ function App() {
       
       <main className="relative z-10">
         {/* Pass state control to Hero for the text and dots */}
-        <div className="min-h-screen md:h-auto">
-          <Hero currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} />
-        </div>
+        <Hero currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} />
         
         <div className="min-h-screen md:min-h-0">
           <ServiceGrid />
@@ -273,6 +289,8 @@ function App() {
         <div className="min-h-screen md:min-h-0">
           <PricingSection />
         </div>
+
+        <SocialsTeaser />
 
         <div className="min-h-screen md:min-h-0">
           <FaqSection />

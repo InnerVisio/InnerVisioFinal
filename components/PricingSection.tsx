@@ -57,18 +57,14 @@ export const PricingSection: React.FC = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <section id="pricing" className="py-28 md:py-36 px-6 bg-background relative overflow-hidden">
+      <section id="pricing" className="py-20 md:py-28 px-6 bg-background relative overflow-hidden">
         {/* Deep-link targets for #pricing-ai / #pricing-3d */}
         <span id="pricing-ai" className="absolute top-0" aria-hidden />
         <span id="pricing-3d" className="absolute top-0" aria-hidden />
 
-        {/* Drifting plum / orchid glows: the liquid glass needs colour behind it */}
-        <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden>
-          <div className="absolute -top-48 -right-40 w-[420px] h-[420px] md:w-[720px] md:h-[720px] rounded-full glow-plum animate-drift-slow" />
-          <div className="absolute top-[14%] -left-48 w-[380px] h-[380px] md:w-[620px] md:h-[620px] rounded-full glow-orchid opacity-60 animate-drift-slow [animation-delay:-7s]" />
-          <div className="absolute top-[38%] -right-56 w-[400px] h-[400px] md:w-[680px] md:h-[680px] rounded-full glow-plum opacity-90 animate-drift-slow [animation-delay:-13s]" />
-          <div className="absolute top-[62%] left-[8%] w-[360px] h-[360px] md:w-[640px] md:h-[640px] rounded-full glow-plum opacity-80 animate-drift-slow [animation-delay:-4s]" />
-          <div className="absolute -bottom-40 right-[18%] w-[340px] h-[340px] md:w-[560px] md:h-[560px] rounded-full glow-orchid opacity-50 animate-drift-slow [animation-delay:-17s]" />
+        {/* One soft plum glow above the heading; the only other glow lives behind the featured card */}
+        <div className="absolute inset-x-0 top-0 h-[640px] z-0 pointer-events-none" aria-hidden>
+          <div className="absolute left-1/2 -top-80 -translate-x-1/2 w-[860px] h-[720px] max-w-[160vw] rounded-full glow-plum opacity-70 animate-drift-slow" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
@@ -87,7 +83,7 @@ export const PricingSection: React.FC = () => {
             <div
               role="tablist"
               aria-label={t('pricingTitle')}
-              className="mt-10 md:mt-12 inline-flex w-full sm:w-auto max-w-md sm:max-w-none p-1.5 glass-pill !shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_20px_60px_rgba(0,0,0,0.45)]"
+              className="mt-9 md:mt-11 inline-flex w-full sm:w-auto max-w-md sm:max-w-none p-1 rounded-full border border-white/10 bg-white/[0.04]"
             >
               {TABS.map((tab) => {
                 const isActive = activeTab === tab;
@@ -103,14 +99,14 @@ export const PricingSection: React.FC = () => {
                     tabIndex={isActive ? 0 : -1}
                     onClick={() => selectTab(tab)}
                     onKeyDown={handleTabKeyDown}
-                    className={`relative flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-7 py-3 rounded-full font-display font-medium text-[13px] sm:text-[15px] transition-colors duration-500 ${FOCUS_RING} ${
+                    className={`relative flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-7 min-h-[44px] rounded-full font-display font-medium text-[13px] sm:text-[15px] transition-colors duration-500 ${FOCUS_RING} ${
                       isActive ? 'text-white' : 'text-ink-2 md:hover:text-ink'
                     }`}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="pricing-tab-pill"
-                        className="absolute inset-0 rounded-full bg-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_30px_rgba(162,77,184,0.45)]"
+                        className="absolute inset-0 rounded-full bg-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_0_28px_rgba(162,77,184,0.4)]"
                         transition={{ type: 'tween', duration: 0.6, ease: EASE_OUT }}
                       />
                     )}
@@ -119,10 +115,6 @@ export const PricingSection: React.FC = () => {
                         <>
                           <span className={isActive ? 'text-orchid-pale' : 'text-orchid-soft'} aria-hidden>✦</span>
                           {content.tabAi}
-                          {/* On phones the badge sits on the pill's corner so the label stays on one line */}
-                          <span className="absolute -top-4 -right-3 sm:static px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-chip-gradient text-plum-black text-[9px] sm:text-[10px] font-display font-semibold uppercase tracking-[0.14em] leading-none whitespace-nowrap shadow-[0_0_14px_rgba(240,212,244,0.35)]">
-                            {content.newBadge}
-                          </span>
                         </>
                       ) : (
                         <>
@@ -149,7 +141,7 @@ export const PricingSection: React.FC = () => {
               transition={{ duration: 0.6, ease: EASE_OUT }}
             >
               {activeTab === 'ai' ? (
-                <AiPricingPanel content={content} />
+                <AiPricingPanel content={content} language={language} />
               ) : (
                 <Classic3DPanel language={language} intro={content.classicIntro} crossLink={content.classicCrossLink} />
               )}
@@ -162,7 +154,7 @@ export const PricingSection: React.FC = () => {
             </div>
           )}
 
-          <p className="mt-16 md:mt-20 text-center text-xs md:text-sm text-ink-3 font-light max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-14 md:mt-20 text-center text-xs md:text-sm text-ink-3 font-light max-w-2xl mx-auto leading-relaxed">
             {t('pricingFootnote')}
           </p>
         </div>

@@ -7,7 +7,7 @@ export const SITE = {
   title: '3D a AI vizualizace interiérů a exteriérů | InnerVisio',
   description:
     'Studio architektonických vizualizací z Havířova. Fotorealistické 3D vizualizace podle projektové dokumentace a AI vizualizace z fotky do 24 hodin pro realitní makléře, developery, architekty a majitele nemovitostí po celé ČR.',
-  email: 'innervisio@gmail.com',
+  email: 'zakazky@innervisio.cz',
   phone: '+420604445240',
   phoneDisplay: '+420 604 445 240',
   founder: 'Daniel Sváček',
@@ -20,6 +20,9 @@ export const SITE = {
   },
   areaServed: ['Česká republika', 'Praha', 'Ostrava', 'Havířov'],
   instagram: 'https://www.instagram.com/innervisio/',
+  instagramHandle: 'innervisio',
+  // Add the page URL here (https://www.facebook.com/...) and the Facebook button/link appears on the site
+  facebook: '',
   logo: '/FavIcon.png',
   socialImage: '/og-image.jpg',
   knowsAbout: [

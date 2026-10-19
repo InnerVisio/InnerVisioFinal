@@ -1,109 +1,200 @@
-import React, { useEffect, useRef, useState, KeyboardEvent } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SERVICES } from '../constants';
-import { ArrowRight, ChevronRight, X, ArrowUpRight } from 'lucide-react';
+import { AI_BEFORE_AFTER, SERVICES } from '../constants';
+import { ArrowRight, X, ArrowUpRight } from 'lucide-react';
 import { ServiceItem } from '../types';
 import { useLanguage, Language } from './LanguageContext';
 import { blurInRise, EASE_OUT } from './ui/brand';
 
-const SERVICE_TRANSLATIONS: Record<Language, Record<string, { title: string; description: string; detailedDescription: string; features: string[] }>> = {
+type ServiceCopy = { title: string; description: string; detailedDescription: string; features: string[] };
+
+// `description` is the one-line card text; `detailedDescription` is shown in the detail modal.
+const SERVICE_TRANSLATIONS: Record<Language, Record<string, ServiceCopy>> = {
   cs: {
     '1': {
        title: 'Vizualizace Exteriéru',
-       description: 'Fotorealistické ztvárnění exteriérů budov s důrazem na světlo, materiály a okolní prostředí.',
+       description: 'Fotorealistické domy a budovy se světlem, materiály i okolím.',
        detailedDescription: 'Nabízíme špičkové fotorealistické vizualizace exteriérů pro developerské projekty i rodinné domy. Soustředíme se na dokonalou hru světel, stínů a zasazení rodinného domu do reálného terénu či okolní zástavby.',
        features: ['Realistické materiály a textury', 'Denní a noční scenérie', 'Zakomponování do fotografie', 'Úprava okolí podle architektonické studie'],
     },
     '2': {
        title: 'Vizualizace Interiéru',
-       description: 'Detailní pohledy do vnitřních prostor, které zachycují atmosféru a designový záměr.',
+       description: 'Atmosféra, materiály a světlo místností ještě před realizací.',
        detailedDescription: 'Tvorba 3D návrhů interiérů, které klade důraz na atmosféru, správné osvětlení a rozvržení prostoru. Vaši klienti si díky tomu dokáží živě představit domov či kancelář dříve, než se položí první cihla.',
        features: ['Precizní nasvícení scény', 'Atmosférické záběry', 'Realistické modely nábytku', 'Vyladěné textury vybavení'],
     },
     '3': {
        title: '3D půdorysy',
-       description: 'Prostorové zobrazení dispozic, které pomáhá lépe pochopit objem a uspořádání interiéru.',
+       description: 'Dispozice z nadhledu, srozumitelná i pro laiky.',
        detailedDescription: 'Klasické 2D půdorysy jsou často pro laiky nečitelné. Pomocí 3D půdorysu nabízíme prostorový náhled objektu z nadhledu, což zajišťuje perfektní představu o celkovém uspořádání a provozu domácnosti.',
        features: ['Trojrozměrná vizualizace příček a oken', 'Základní nebo detailní vybavení nábytkem', 'Skvělé pro inzerci na realitních portálech', 'Zvýšení důvěry a zájmu klientů'],
     },
     '4': {
        title: '2D půdorysy',
-       description: 'Přehledná a estetická schémata podlaží pro marketingové účely a prezentace.',
+       description: 'Přehledná schémata podlaží pro prodej a pronájem.',
        detailedDescription: 'Prezentujeme technické nákresy ve srozumitelné a esteticky laděné podobě. Ideální doplněk pro prodej bytů a pronájmy kancelářských ploch.',
        features: ['Barevné kódování a materiály (např. dekor dřeva)', 'Doplnění výměr jednotlivých místností', 'Možnost přidání vašeho loga', 'Jasné vyznačení dispozice s kótami'],
     },
     '5': {
        title: 'Virtuální prohlídky',
-       description: 'Interaktivní 360° zážitky, které umožňují volný pohyb v budoucím prostoru.',
+       description: 'Interaktivní 360° prohlídka, kterou sdílíte odkazem.',
        detailedDescription: 'Nabízíme revoluční možnost, jak se projít domem ještě před jeho dokončením. Klient se může libovolně rozhlížet a procházet jednotlivými místnostmi v úhlu 360 stupňů.',
        features: ['Pohyb ve scéně pomocí hotspotů', 'Napojení pro brýle s virtuální realitou', 'Zapracování informačních bodů', 'Snadné sdílení formou odkazu'],
     },
     '6': {
        title: 'Web s konfigurátorem',
-       description: 'Komplexní digitální prezentace projektů integrující vizuální obsah do moderního webu.',
+       description: 'Prezentační web projektu s interaktivním výběrem bytů.',
        detailedDescription: 'Developerům a realitním kancelářím tvoříme ucelené prezentační webové stránky pro konkrétní stavební projekty s interaktivním výběrem bytů a integrací vizuálního materiálu. Toto je fiktivní projekt pro ukázku funkčnosti, pokud máte zájem o plnohodnotnou stránku s těmito funkcemi, ozvěte se nám.',
        features: ['Interaktivní 2D/3D navigace (klikací budova)', 'Filtrování volných/obsazených bytů', 'Moderní animace a uživatelský UX/UI design', 'SEO optimalizace pro vyhledávače'],
     },
     '7': {
        title: 'AI vizualizace',
-       description: 'Fotorealistické vizualizace z fotky nebo skici do 24 hodin. Ideální pro inzerci a rekonstrukce.',
+       description: 'Fotorealistická vizualizace z fotky, skici nebo půdorysu do 24 hodin.',
        detailedDescription: 'Z fotky z mobilu, skici nebo půdorysu vytvoříme fotorealistickou vizualizaci interiéru či exteriéru do 24 hodin. AI je pro nás nástroj, nápad, materiály a funkčnost dodává člověk. Každý snímek ručně kontrolujeme, aby seděla geometrie, proporce i světlo.',
        features: ['Hotovo do 24 hodin', '3 stylové varianty v ceně', 'Zachovaná geometrie a proporce prostoru', 'Transparentní označení dle EU AI Act'],
+    },
+    '8': {
+       title: 'Video tvorba',
+       description: 'Natočené videoprohlídky nemovitostí, i z dronu, pro inzerát, web a sociální sítě.',
+       detailedDescription: 'Nemovitost natočíme na místě a postavíme z ní videoprohlídku, která prodává. Stabilizované záběry interiéru, u domů i dron z výšky, střih, hudba, titulky a logo vaší kanceláře. Video dodáme ve formátu 16:9 pro web a inzerci i 9:16 pro Reels a Stories.',
+       features: ['Natáčení nemovitosti přímo na místě', 'Záběry z dronu pro exteriér a okolí', 'Střih, hudba, titulky a logo', 'Formát 16:9 i 9:16 pro Reels'],
     }
   },
   en: {
     '1': {
        title: 'Exterior Rendering',
-       description: 'Photorealistic architectural rendering of building exteriors with realistic lighting, textures, and details.',
+       description: 'Photorealistic buildings with true light, materials and surroundings.',
        detailedDescription: 'We build high-end photorealistic architectural exterior representations for builders, developers, and private home renovators. We study physical lighting conditions to craft seamless real-world compositions.',
        features: ['Realistic physical textures', 'Multi-time atmosphere (Day/Sunset/Night)', 'Existing environment photomontages', 'Surrounding terrain studies'],
     },
     '2': {
        title: 'Interior Rendering',
-       description: 'Bespoke indoor visualizations displaying materials, scale, lightning, and overall lifestyle atmosphere.',
+       description: 'The atmosphere, materials and light of a room before it is built.',
        detailedDescription: 'Creating 3D internal room concepts focusing on warm atmosphere, custom furniture schemes, material tactile sensations and lighting. Let your prospective buyers explore rooms long before building.',
        features: ['Detailed color temperature setups', 'Atmospheric mood-settings', 'High-poly furniture modeling', 'Premium materials & textures'],
     },
     '3': {
        title: '3D Floor Plans',
-       description: '3D spatial plan diagrams showcasing internal room distributions, furniture setups, and circulation flows.',
+       description: 'Top-down layouts that anyone can read at a glance.',
        detailedDescription: 'Standard flat drafts are often tough to comprehend for buyers. Our 3D plans deliver an instant clear spatial top-down overview of walls, rooms, sizing, and modern interior flows.',
        features: ['Precision 3D walls & openings modeling', 'Modern custom lifestyle furniture', 'Tailored for property portal listings', 'Significantly higher client engagement'],
     },
     '4': {
        title: '2D Floor Plans',
-       description: 'Clean, simplified technical floor schemas customized for sleek real estate portfolios.',
+       description: 'Clean floor plan diagrams for sales and leasing.',
        detailedDescription: 'We translate raw builder layouts into legible, beautiful, and aesthetic sales pamphlets. Essential addition for project listings, brochures, and leasing websites.',
        features: ['Color matching & flooring textures', 'Interactive overall room statistics', 'Optional company logo watermarks', 'Clear metric scale listings'],
     },
     '5': {
        title: 'Virtual Tours (360°)',
-       description: 'Immersive online 360-degree panoramas with interactive hotspots to freely explore future properties.',
+       description: 'Interactive 360° walkthroughs you share with a link.',
        detailedDescription: 'Let clients walk through room projects from the web before groundbreaking! Users can pan around 360-degrees on any device or slide into VR headsets for maximum presence of scale.',
        features: ['Interactive hotspot node navigation', 'Mobile & VR headset responsive', 'Integrated smart info tags', 'Fast link-to-share web hosting'],
     },
     '6': {
        title: 'Developer Configurator',
-       description: 'Premium standalone web portals combining 2D/3D flat selectors with modern real estate design.',
+       description: 'A project website with an interactive flat selector.',
        detailedDescription: 'Custom, high-converting property portfolio web development. Features interactive building floor selection tools, unit availability tables, interactive location map tags and responsive forms. This is a fictional project for demonstration purposes; if you are interested in a full-fledged website with these features, please contact us.',
        features: ['Interactive clicks on building floor layouts', 'Live real-time flat filter systems', 'Ultra-fast loading times & SEO', 'Simplified custom admin dashboard'],
     },
     '7': {
        title: 'AI Visualization',
-       description: 'Photorealistic visualizations from a photo or sketch within 24 hours. Ideal for listings and renovations.',
+       description: 'A photorealistic visualization from a photo, sketch or plan within 24 hours.',
        detailedDescription: 'From a phone photo, sketch or floor plan we create a photorealistic interior or exterior visualization within 24 hours. AI is our tool; the idea, materials and function come from people. We check every image by hand so geometry, proportions and light stay right.',
        features: ['Ready within 24 hours', '3 style variants included', 'Geometry and proportions preserved', 'Transparent labelling under the EU AI Act'],
+    },
+    '8': {
+       title: 'Video Production',
+       description: 'Filmed property video tours, drone included, for listings, web and social media.',
+       detailedDescription: 'We film the property on site and build a video tour that sells. Stabilised interior footage, drone shots from above for houses, editing, music, titles and your agency logo. Delivered in 16:9 for web and listings and 9:16 for Reels and Stories.',
+       features: ['Filmed on site at the property', 'Drone footage of the exterior and surroundings', 'Editing, music, titles and logo', '16:9 and 9:16 formats for Reels'],
     }
   }
 };
 
-// Tag labels come from constants in English; show them in the active language
-const TAG_TRANSLATIONS: Record<Language, Record<string, string>> = {
-  cs: { 'Professional': 'Profesionálně', 'Fast Delivery': 'Rychlé dodání', '3 Styles': '3 styly' },
-  en: {},
+// Price hints mirror the pricing section (Classic3DPanel PRICING_TRANSLATIONS / aiPricingContent)
+const PRICE_HINTS: Record<Language, Record<string, string>> = {
+  cs: {
+    '1': 'od 6 000 Kč', '2': 'od 3 000 Kč', '3': 'od 720 Kč', '4': 'od 480 Kč',
+    '5': 'od 3 600 Kč', '6': 'Cena individuálně', '7': 'od 290 Kč', '8': 'od 3 900 Kč',
+  },
+  en: {
+    '1': 'from €240', '2': 'from €120', '3': 'from €30', '4': 'from €20',
+    '5': 'from €145', '6': 'Custom pricing', '7': 'from €12', '8': 'from €160',
+  },
 };
-const DEFAULT_TAGS = ['Professional', 'Fast Delivery'];
+
+// Video production offers, same prices as the classic pricing tab
+const VIDEO_OFFERS: Record<Language, { name: string; price: string }[]> = {
+  cs: [
+    { name: 'Videoprohlídka interiéru', price: 'od 3 900 Kč' },
+    { name: 'Videoprohlídka s dronem', price: 'od 5 900 Kč' },
+  ],
+  en: [
+    { name: 'Interior video tour', price: 'from €160' },
+    { name: 'Video tour with drone', price: 'from €240' },
+  ],
+};
+
+// The three AI offers, same prices as the AI pricing tab
+const AI_OFFERS: Record<Language, { name: string; price: string }[]> = {
+  cs: [
+    { name: 'AI Home staging', price: 'od 290 Kč / fotka' },
+    { name: 'AI vizualizace', price: 'od 2 900 Kč / 4 snímky' },
+    { name: 'AI video', price: 'od 1 990 Kč / klip' },
+  ],
+  en: [
+    { name: 'AI Home staging', price: 'from €12 / photo' },
+    { name: 'AI visualization', price: 'from €116 / 4 images' },
+    { name: 'AI video', price: 'from €80 / clip' },
+  ],
+};
+
+const COPY = {
+  cs: {
+    heading: 'Vizualizace pro každý projekt',
+    lead: 'Klasické 3D vizualizace přesně podle projektu a AI vizualizace do 24 hodin. Pro architekty, developery, makléře i majitele domů z Prahy, Ostravy i celé ČR.',
+    aiTitle: 'AI vizualizace',
+    aiTail: 'rychle, do 24 hodin',
+    classicTitle: 'Klasické 3D vizualizace',
+    classicTail: 'přesně podle projektu',
+    videoTitle: 'Video tvorba',
+    videoTail: 'nemovitost v pohybu',
+    learnMore: 'Zjistit více',
+    aiPricing: 'Zobrazit ceník',
+    aiFrom: 'od zadání po dodání',
+    priceLabel: 'Cena',
+    eyebrowModal: 'Služby Studia',
+    request: 'Poptat tuto službu',
+    interested: 'Mám zájem',
+    demo: 'Chci vidět ukázku',
+    aiPricingFull: 'Zobrazit ceník AI vizualizací',
+    imageN: (n: number) => `Zobrazit obrázek ${n}`,
+    groupAria: 'Služby',
+  },
+  en: {
+    heading: 'Visualization for every project',
+    lead: 'Classic 3D visualization true to your project, and AI visualization within 24 hours. For architects, developers, agents and home owners in Prague, Ostrava and across the Czech Republic.',
+    aiTitle: 'AI visualization',
+    aiTail: 'fast, within 24 hours',
+    classicTitle: 'Classic 3D visualization',
+    classicTail: 'true to your project',
+    videoTitle: 'Video production',
+    videoTail: 'property in motion',
+    learnMore: 'Learn more',
+    aiPricing: 'View pricing',
+    aiFrom: 'from brief to delivery',
+    priceLabel: 'Price',
+    eyebrowModal: 'Studio Services',
+    request: 'Request service',
+    interested: 'I am interested',
+    demo: 'View demo',
+    aiPricingFull: 'See AI visualization pricing',
+    imageN: (n: number) => `View image ${n}`,
+    groupAria: 'Services',
+  },
+} as const;
 
 // Headline with exactly one gradient word (the last one), per brand typography rules
 const GradientHeadline: React.FC<{ text: string }> = ({ text }) => {
@@ -116,7 +207,7 @@ const GradientHeadline: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-// Branded stand-in for services that have no photo yet
+// Branded stand-in for services that have no photo yet (used in the detail modal)
 const ServicePlaceholder: React.FC<{ icon: ServiceItem['icon'] }> = ({ icon: Icon }) => (
   <div className="absolute inset-0 bg-[radial-gradient(90%_80%_at_70%_20%,rgba(196,139,224,0.32)_0%,rgba(91,39,105,0.55)_42%,#1F0F29_100%)] flex items-center justify-center">
     <div className="absolute w-48 h-48 rounded-full glow-orchid opacity-70" aria-hidden />
@@ -124,25 +215,75 @@ const ServicePlaceholder: React.FC<{ icon: ServiceItem['icon'] }> = ({ icon: Ico
   </div>
 );
 
-const NewBadge: React.FC<{ label: string }> = ({ label }) => (
-  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-white font-display font-semibold text-[10px] uppercase tracking-[0.14em] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_0_16px_rgba(162,77,184,0.55)]">
-    <span className="w-1 h-1 rounded-full bg-magenta shadow-[0_0_6px_#E055F0]" aria-hidden />
-    {label}
-  </span>
+// Group sub-heading: "Title – tail" with a hairline running to the edge
+const GroupHeading: React.FC<{ title: string; tail: string; id: string }> = ({ title, tail, id }) => (
+  <motion.div {...blurInRise(0, 20)} className="flex items-center gap-5 mb-6 md:mb-8">
+    <h3 id={id} className="font-display text-xl md:text-2xl tracking-tightest leading-snug text-ink font-semibold">
+      {title}
+      <span className="font-normal text-ink-2"> – {tail}</span>
+    </h3>
+    <span className="hidden md:block h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" aria-hidden />
+  </motion.div>
 );
 
-const SERVICE_EASE = { duration: 0.7, ease: EASE_OUT };
+interface CardProps {
+  service: ServiceItem;
+  index: number;
+  price: string;
+  learnMore: string;
+  onOpen: (service: ServiceItem, trigger: HTMLElement | null) => void;
+}
+
+// Compact card: image + text row on phones, vertical card from sm up. The "learn more" button is
+// stretched over the whole card, so the card is one real interactive element.
+const ServiceCard: React.FC<CardProps> = ({ service, index, price, learnMore, onOpen }) => (
+  <motion.li {...blurInRise((index % 3) * 0.08, 24)} className="group relative">
+    <article className="relative h-full flex sm:flex-col gap-4 sm:gap-0 p-2 rounded-card border border-white/10 bg-white/[0.035] transition-[border-color,box-shadow,background-color] duration-500 hover:border-white/25 hover:bg-white/[0.055] hover:shadow-[0_24px_60px_rgba(0,0,0,0.45),0_0_50px_rgba(162,77,184,0.22)] has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-orchid-soft">
+      {/* Photo */}
+      <div className="relative shrink-0 w-[104px] min-[400px]:w-[120px] sm:w-full self-stretch sm:self-auto sm:aspect-[16/10] overflow-hidden rounded-[20px] sm:rounded-[22px] bg-plum-black">
+        {service.imageUrl && (
+          <img
+            loading="lazy"
+            src={service.imageUrl}
+            alt={`${service.title} – InnerVisio`}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2400ms] ease-out md:group-hover:scale-[1.04]"
+            referrerPolicy="no-referrer"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612]/70 via-transparent to-transparent pointer-events-none" aria-hidden />
+      </div>
+
+      {/* Text */}
+      <div className="flex flex-col flex-1 min-w-0 py-1.5 pr-2 sm:px-4 sm:pt-5 sm:pb-3">
+        <h4 className="font-display font-semibold text-ink text-[17px] sm:text-xl tracking-tightest leading-tight mb-1.5 sm:mb-2">
+          {service.title}
+        </h4>
+        <p className="text-ink-2 text-sm leading-relaxed font-light line-clamp-3 sm:line-clamp-none mb-3 sm:mb-5">
+          {service.description}
+        </p>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <span className="font-display text-sm font-medium text-ink">{price}</span>
+          <button
+            type="button"
+            onClick={(e) => onOpen(service, e.currentTarget)}
+            className="focus-ring focus-visible:outline-transparent inline-flex items-center gap-1.5 font-display font-medium text-sm text-orchid-soft transition-colors duration-300 group-hover:text-orchid-pink after:absolute after:inset-0 after:rounded-card after:content-['']"
+          >
+            {learnMore}
+            <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+          </button>
+        </div>
+      </div>
+    </article>
+  </motion.li>
+);
 
 export const ServiceGrid: React.FC = () => {
   const { language, t } = useLanguage();
-  const [activeServiceId, setActiveServiceId] = useState(SERVICES[0].id);
+  const copy = COPY[language] ?? COPY.cs;
   const [selectedServiceModal, setSelectedServiceModal] = useState<ServiceItem | null>(null);
   const [selectedServiceImageIndex, setSelectedServiceImageIndex] = useState(0);
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
-
-  const activeServiceRaw = SERVICES.find(s => s.id === activeServiceId) || SERVICES[0];
 
   const getLocalizedService = (raw: ServiceItem): ServiceItem => {
     const local = SERVICE_TRANSLATIONS[language]?.[raw.id];
@@ -154,14 +295,14 @@ export const ServiceGrid: React.FC = () => {
       features: local?.features || raw.features,
     };
   };
+  const priceOf = (id: string) => PRICE_HINTS[language]?.[id] ?? '';
 
-  const localizeTag = (tag: string) => TAG_TRANSLATIONS[language]?.[tag] || tag;
+  const aiService = SERVICES.find((s) => s.id === '7');
+  const videoService = SERVICES.find((s) => s.id === '8');
+  const classicServices = SERVICES.filter((s) => s.id !== '7' && s.id !== '8');
 
-  const activeService = getLocalizedService(activeServiceRaw);
-  const learnMore = language === 'cs' ? 'Zjistit více' : 'Learn more';
-
-  const handleOpenModal = (service: ServiceItem) => {
-    lastFocusRef.current = document.activeElement as HTMLElement | null;
+  const handleOpenModal = (service: ServiceItem, trigger: HTMLElement | null) => {
+    lastFocusRef.current = trigger ?? (document.activeElement as HTMLElement | null);
     setSelectedServiceModal(service);
     setSelectedServiceImageIndex(0);
   };
@@ -171,7 +312,7 @@ export const ServiceGrid: React.FC = () => {
     lastFocusRef.current?.focus?.();
   };
 
-  // Escape closes the modal; focus moves into the dialog when it opens
+  // Escape closes the modal; focus moves into the dialog when it opens; page does not scroll behind it
   useEffect(() => {
     if (!selectedServiceModal) return;
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -179,258 +320,180 @@ export const ServiceGrid: React.FC = () => {
     };
     window.addEventListener('keydown', onKey);
     const id = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', onKey);
       window.clearTimeout(id);
+      document.body.style.overflow = prevOverflow;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedServiceModal]);
 
-  // Arrow-key navigation inside the vertical tab list (WAI-ARIA tabs pattern)
-  const handleTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    let next = -1;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (index + 1) % SERVICES.length;
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (index - 1 + SERVICES.length) % SERVICES.length;
-    if (e.key === 'Home') next = 0;
-    if (e.key === 'End') next = SERVICES.length - 1;
-    if (next === -1) return;
-    e.preventDefault();
-    setActiveServiceId(SERVICES[next].id);
-    tabRefs.current[next]?.focus();
-  };
+  const aiLocal = aiService ? getLocalizedService(aiService) : null;
+  const videoLocal = videoService ? getLocalizedService(videoService) : null;
 
   return (
-    <section id="services" className="relative z-10 py-28 md:py-36">
-      {/* Soft plum glows so the liquid glass has something to refract */}
+    <section id="services" className="relative z-10 py-24 md:py-36">
+      {/* Soft plum glows so the glass has something to refract */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="glow-plum rounded-full absolute -left-40 top-[22%] w-[640px] h-[640px] animate-drift-slow" />
-        <div className="glow-orchid rounded-full absolute right-[-12%] top-[48%] w-[520px] h-[520px] opacity-70" />
+        <div className="glow-plum rounded-full absolute -left-40 top-[18%] w-[640px] h-[640px] animate-drift-slow" />
+        <div className="glow-orchid rounded-full absolute right-[-12%] top-[55%] w-[520px] h-[520px] opacity-70" />
         <div className="glow-plum rounded-full absolute left-1/2 -translate-x-1/2 bottom-[-220px] w-[900px] h-[420px] opacity-60" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
 
         {/* Section Header */}
-        <motion.div {...blurInRise(0)} className="max-w-3xl mb-14 md:mb-20">
+        <motion.div {...blurInRise(0)} className="max-w-3xl mb-12 md:mb-16">
           <span className="eyebrow block mb-4">{t('servicesSubtitle')}</span>
           <h2 className="font-display font-bold text-ink text-4xl md:text-6xl tracking-tightest leading-[1.05] mb-6">
-            <GradientHeadline text={t('ourExpertise')} />
+            <GradientHeadline text={copy.heading} />
           </h2>
           <p className="text-ink-2 text-base md:text-lg font-light leading-relaxed max-w-2xl">
-            {t('ourExpertiseDesc')}
+            {copy.lead}
           </p>
         </motion.div>
 
-        {/* Desktop: Tabbed Liquid-Glass Panel */}
-        <motion.div {...blurInRise(0.1)} className="hidden lg:block">
-          <div className="glass-strong relative overflow-hidden rounded-card-lg">
-            {/* Inner plum light so the glass reads as lit from within */}
-            <div className="absolute inset-0 glass-inner-glow pointer-events-none" aria-hidden />
+        {/* Group 1: AI visualization (the new highlight) */}
+        {aiService && aiLocal && (
+          <div role="group" aria-labelledby="services-ai-title">
+            <GroupHeading id="services-ai-title" title={copy.aiTitle} tail={copy.aiTail} />
 
-            <div className="relative grid grid-cols-[minmax(300px,36%)_1fr]">
-
-              {/* LEFT: tab list */}
-              <div
-                role="tablist"
-                aria-orientation="vertical"
-                aria-label={t('servicesSubtitle')}
-                className="flex flex-col gap-1.5 p-4 border-r border-white/10"
-              >
-                {SERVICES.map((rawService, index) => {
-                  const service = getLocalizedService(rawService);
-                  const isActive = activeServiceId === service.id;
-                  return (
-                    <button
-                      key={service.id}
-                      ref={(el) => { tabRefs.current[index] = el; }}
-                      id={`service-tab-${service.id}`}
-                      role="tab"
-                      type="button"
-                      aria-selected={isActive}
-                      aria-controls="service-panel"
-                      tabIndex={isActive ? 0 : -1}
-                      onClick={() => setActiveServiceId(service.id)}
-                      onKeyDown={(e) => handleTabKeyDown(e, index)}
-                      className="focus-ring group relative w-full text-left rounded-2xl px-3.5 py-[15px] flex items-center gap-3.5 transition-colors duration-500"
-                    >
-                      {isActive && (
-                        <motion.span
-                          layoutId="service-tab-active"
-                          transition={SERVICE_EASE}
-                          className="absolute inset-0 rounded-2xl bg-[linear-gradient(100deg,rgba(162,77,184,0.34)_0%,rgba(91,39,105,0.16)_60%,rgba(91,39,105,0.06)_100%)] border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_0_36px_rgba(162,77,184,0.25)]"
-                          aria-hidden
-                        >
-                          {/* Glowing left edge */}
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[3px] rounded-full bg-gradient-to-b from-orchid-pale to-orchid-soft shadow-[0_0_12px_rgba(196,139,224,0.9)]" />
-                        </motion.span>
-                      )}
-                      {!isActive && (
-                        <span className="absolute inset-0 rounded-2xl bg-white/0 group-hover:bg-white/[0.04] transition-colors duration-500" aria-hidden />
-                      )}
-
-                      <span className={`icon-chip relative w-10 h-10 rounded-xl shrink-0 transition-shadow duration-500 ${isActive ? 'shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_18px_rgba(196,139,224,0.35)]' : ''}`}>
-                        <service.icon className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} aria-hidden />
-                      </span>
-                      <span className={`relative flex-1 min-w-0 font-display font-medium text-[15px] tracking-[-0.01em] transition-colors duration-500 ${isActive ? 'text-ink' : 'text-ink-2 group-hover:text-ink'}`}>
-                        {service.title}
-                      </span>
-                      {service.isNew && <span className="relative"><NewBadge label={t('newBadge')} /></span>}
-                      <ChevronRight
-                        aria-hidden
-                        className={`relative w-4 h-4 shrink-0 transition-all duration-500 ${isActive ? 'text-orchid-soft opacity-100 translate-x-0' : 'text-ink-3 opacity-0 -translate-x-1.5 group-hover:opacity-60'}`}
-                      />
-                    </button>
-                  );
-                })}
+            <motion.article
+              {...blurInRise(0.05, 24)}
+              className="glass-strong glass-inner-glow relative overflow-hidden rounded-card md:rounded-card-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_70px_rgba(162,77,184,0.28)] grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-2 lg:gap-4 p-2 md:p-3"
+            >
+              {/* Real AI example: the finished result with the 24 h promise as plain type (no label boxes) */}
+              <div className="relative overflow-hidden rounded-[22px] md:rounded-[28px] min-h-[220px] md:min-h-[300px] lg:min-h-[380px] bg-plum-black border border-white/10">
+                <img
+                  src={AI_BEFORE_AFTER.afterSmall}
+                  alt={language === 'cs' ? 'AI vizualizace rekonstruovaného domu' : 'AI visualization of a renovated house'}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,3,8,0.25)_0%,rgba(5,3,8,0)_35%,rgba(5,3,8,0.75)_100%)]" aria-hidden />
+                <p className="absolute left-4 bottom-4 md:left-6 md:bottom-6 flex items-baseline gap-3 drop-shadow-[0_2px_14px_rgba(5,3,8,0.7)]">
+                  <span className="font-display font-bold text-ink text-4xl md:text-5xl tracking-tightest leading-none">24 h</span>
+                  <span className="font-display text-sm text-ink-2">{copy.aiFrom}</span>
+                </p>
               </div>
+              {/* Text */}
+              <div className="relative flex flex-col p-4 pb-5 md:p-8 lg:p-10">
+                <h4 className="font-display font-bold text-ink text-3xl md:text-4xl tracking-tightest leading-[1.08] mb-3">
+                  {aiLocal.title}
+                </h4>
+                <p className="text-ink-2 text-base leading-relaxed font-light max-w-xl mb-6">
+                  {aiLocal.description}
+                </p>
 
-              {/* RIGHT: content */}
-              <div
-                id="service-panel"
-                role="tabpanel"
-                aria-labelledby={`service-tab-${activeService.id}`}
-                className="relative p-4 min-h-[560px]"
-              >
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={activeService.id}
-                    initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -8, filter: 'blur(8px)' }}
-                    transition={{ duration: 0.55, ease: EASE_OUT }}
-                    className="flex flex-col h-full"
+                <ul className="mb-7 md:mb-8 border-t border-white/10">
+                  {AI_OFFERS[language].map((offer) => (
+                    <li key={offer.name} className="flex items-baseline justify-between gap-4 py-3 border-b border-white/10">
+                      <span className="font-display font-medium text-sm md:text-base text-ink">{offer.name}</span>
+                      <span className="font-display text-sm md:text-base text-orchid-soft text-right">{offer.price}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-auto flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenModal(aiService, e.currentTarget)}
+                    className="btn-primary focus-ring group inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full px-7 py-3 font-display font-medium text-sm md:text-base whitespace-nowrap"
                   >
-                    {/* Photo */}
-                    <div className="relative h-[330px] w-full overflow-hidden rounded-[24px] border border-white/10 shrink-0 bg-plum-black">
-                      {activeService.imageUrl ? (
-                        <motion.img
-                          initial={{ scale: 1.04 }}
-                          animate={{ scale: 1 }}
-                          transition={{ duration: 6, ease: EASE_OUT }}
-                          loading="lazy"
-                          src={activeService.imageUrl}
-                          alt={`Služba: ${activeService.title} - InnerVisio`}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <ServicePlaceholder icon={activeService.icon} />
-                      )}
-                      {/* Fade into the dark panel */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612] via-[#0c0612]/25 to-transparent pointer-events-none" />
-
-                      <div className="absolute top-5 left-5 flex items-center gap-2">
-                        {activeService.isNew && <NewBadge label={t('newBadge')} />}
-                      </div>
-                      <div className="absolute top-5 right-5">
-                        <span className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-2xl flex items-center justify-center w-12 h-12">
-                          <activeService.icon className="w-5 h-5 icon-gradient" strokeWidth={1.5} aria-hidden />
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Text */}
-                    <div className="px-4 pt-7 pb-3 flex flex-col flex-grow">
-                      <h3 className="font-display font-bold text-ink text-3xl tracking-tightest leading-tight mb-3">
-                        {activeService.title}
-                      </h3>
-                      <p className="text-ink-2 text-base leading-relaxed font-light max-w-xl">
-                        {activeService.description}
-                      </p>
-
-                      <div className="mt-auto pt-6 flex items-center justify-between gap-4">
-                        <ul className="flex flex-wrap gap-2" aria-label="Tags">
-                          {(activeService.tags ?? DEFAULT_TAGS).map((tag) => (
-                            <li key={tag} className="glass-pill px-3.5 py-1.5 font-display font-medium text-xs text-ink-2">
-                              {localizeTag(tag)}
-                            </li>
-                          ))}
-                        </ul>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOpenModal(activeService)}
-                          className="btn-glass focus-ring group inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-display font-medium text-sm shrink-0"
-                        >
-                          {learnMore}
-                          <ArrowRight className="w-4 h-4 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                    {copy.learnMore}
+                    <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+                  </button>
+                  <a
+                    href="#pricing-ai"
+                    className="btn-glass focus-ring group inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full px-7 py-3 font-display font-medium text-sm md:text-base whitespace-nowrap"
+                  >
+                    {copy.aiPricing}
+                    <ArrowRight className="w-4 h-4 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+                  </a>
+                </div>
               </div>
-
-            </div>
+            </motion.article>
           </div>
-        </motion.div>
+        )}
 
-        {/* Mobile: Horizontal Swipe Slider */}
-        <div className="lg:hidden mb-5 flex items-center gap-3 text-ink-3" aria-hidden>
-          <span className="w-8 h-px bg-gradient-to-r from-transparent to-orchid-soft/60" />
-          <span className="font-display text-[11px] uppercase tracking-[0.22em] font-medium">{language === 'cs' ? 'přetáhněte doprava' : 'swipe right'}</span>
-          <ArrowRight className="w-3.5 h-3.5 text-orchid-soft" />
-        </div>
-        <div className="lg:hidden -mx-6 px-6 overflow-x-auto overflow-y-hidden snap-x snap-mandatory no-scrollbar pt-2 pb-10 scroll-px-6">
-          <ul className="flex gap-4 w-max">
-            {SERVICES.map((rawService, index) => {
-              const service = getLocalizedService(rawService);
-              return (
-                <motion.li
-                  key={service.id}
-                  {...blurInRise(Math.min(index, 3) * 0.08, 24)}
-                  className="w-[84vw] max-w-[380px] snap-start"
-                >
-                  <article className="glass relative h-full overflow-hidden rounded-card flex flex-col">
-                    <div className="absolute inset-0 glass-inner-glow pointer-events-none" aria-hidden />
-                    <div className="relative p-2">
-                      <div className="relative h-48 sm:h-56 w-full overflow-hidden rounded-[22px] bg-plum-black">
-                        {service.imageUrl ? (
-                          <img
-                            loading="lazy"
-                            src={service.imageUrl}
-                            alt={`Vizualizace: ${service.title}`}
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <ServicePlaceholder icon={service.icon} />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612]/80 via-transparent to-transparent pointer-events-none" />
-                        {service.isNew && (
-                          <div className="absolute top-3 left-3">
-                            <NewBadge label={t('newBadge')} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="relative px-5 pt-3 pb-5 flex flex-col flex-grow">
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="icon-chip w-10 h-10 rounded-xl shrink-0">
-                          <service.icon className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} aria-hidden />
-                        </span>
-                        <h3 className="font-display font-bold text-ink text-xl tracking-tightest leading-tight">
-                          {service.title}
-                        </h3>
-                      </div>
-                      <p className="text-ink-2 text-sm leading-relaxed font-light mb-5 flex-grow">
-                        {service.description}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenModal(service)}
-                        className="btn-glass focus-ring self-start inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-display font-medium text-sm"
-                      >
-                        {learnMore}
-                        <ArrowRight className="w-4 h-4 text-orchid-soft" aria-hidden />
-                      </button>
-                    </div>
-                  </article>
-                </motion.li>
-              );
-            })}
+        {/* Group 2: Classic 3D visualization */}
+        <div role="group" aria-labelledby="services-classic-title" className="mt-16 md:mt-24">
+          <GroupHeading id="services-classic-title" title={copy.classicTitle} tail={copy.classicTail} />
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 lg:gap-6">
+            {classicServices.map((raw, index) => (
+              <ServiceCard
+                key={raw.id}
+                service={getLocalizedService(raw)}
+                index={index}
+                price={priceOf(raw.id)}
+                learnMore={copy.learnMore}
+                onOpen={handleOpenModal}
+              />
+            ))}
           </ul>
         </div>
+
+        {/* Group 3: Video production (image right on wide screens, a quiet hairline card, not glass) */}
+        {videoService && videoLocal && (
+          <div role="group" aria-labelledby="services-video-title" className="mt-16 md:mt-24">
+            <GroupHeading id="services-video-title" title={copy.videoTitle} tail={copy.videoTail} />
+
+            <motion.article
+              {...blurInRise(0.05, 24)}
+              className="relative overflow-hidden rounded-card md:rounded-card-lg border border-white/10 bg-white/[0.03] grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-2 lg:gap-4 p-2 md:p-3"
+            >
+              <div className="relative flex flex-col p-4 pb-5 md:p-8 lg:p-10 order-2 lg:order-1">
+                <h4 className="font-display font-bold text-ink text-3xl md:text-4xl tracking-tightest leading-[1.08] mb-3">
+                  {videoLocal.title}
+                </h4>
+                <p className="text-ink-2 text-base leading-relaxed font-light max-w-xl mb-6">
+                  {videoLocal.description}
+                </p>
+
+                <ul className="mb-7 md:mb-8 border-t border-white/10">
+                  {VIDEO_OFFERS[language].map((offer) => (
+                    <li key={offer.name} className="flex items-baseline justify-between gap-4 py-3 border-b border-white/10">
+                      <span className="font-display font-medium text-sm md:text-base text-ink">{offer.name}</span>
+                      <span className="font-display text-sm md:text-base text-orchid-soft text-right whitespace-nowrap">{offer.price}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-auto flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenModal(videoService, e.currentTarget)}
+                    className="btn-primary focus-ring group inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full px-7 py-3 font-display font-medium text-sm md:text-base whitespace-nowrap"
+                  >
+                    {copy.learnMore}
+                    <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+                  </button>
+                  <a
+                    href="#pricing-3d"
+                    className="btn-glass focus-ring group inline-flex items-center justify-center gap-2 min-h-[48px] rounded-full px-7 py-3 font-display font-medium text-sm md:text-base whitespace-nowrap"
+                  >
+                    {copy.aiPricing}
+                    <ArrowRight className="w-4 h-4 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
+                  </a>
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-[22px] md:rounded-[28px] min-h-[220px] md:min-h-[300px] lg:min-h-[360px] bg-plum-black border border-white/10 order-1 lg:order-2">
+                {videoService.imageUrl && (
+                  <img
+                    src={videoService.imageUrl}
+                    alt={language === 'cs' ? 'Dronový záběr domu z vizualizace' : 'Drone view of a house from a visualization'}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612]/60 via-transparent to-transparent pointer-events-none" aria-hidden />
+              </div>
+            </motion.article>
+          </div>
+        )}
 
       </div>
 
@@ -440,6 +503,7 @@ export const ServiceGrid: React.FC = () => {
           {selectedServiceModal && (() => {
             const service = getLocalizedService(selectedServiceModal);
             const modalImage = service.galleryUrls?.[selectedServiceImageIndex] || service.imageUrl;
+            const modalPrice = priceOf(service.id);
             return (
               <div className="fixed inset-0 z-[100] flex items-center justify-center md:p-6">
                 <motion.div
@@ -468,7 +532,7 @@ export const ServiceGrid: React.FC = () => {
                     type="button"
                     onClick={closeModal}
                     aria-label={t('portfolioCloseBtn')}
-                    className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute top-3 right-3 md:top-5 md:right-5 w-11 h-11 rounded-full flex items-center justify-center z-[110] select-none"
+                    className="border border-white/20 bg-[rgba(12,6,18,0.5)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] text-ink transition-colors duration-300 hover:bg-[rgba(162,77,184,0.5)] focus-ring absolute top-3 right-3 md:top-5 md:right-5 w-11 h-11 rounded-full flex items-center justify-center z-[110] select-none"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     <X className="w-5 h-5" aria-hidden />
@@ -485,7 +549,7 @@ export const ServiceGrid: React.FC = () => {
                           animate={{ opacity: 1, filter: 'blur(0px)' }}
                           transition={{ duration: 0.6, ease: EASE_OUT }}
                           src={modalImage}
-                          alt={`Služba: ${service.title}`}
+                          alt={`${service.title} – InnerVisio`}
                           className="absolute inset-0 w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />
@@ -493,13 +557,6 @@ export const ServiceGrid: React.FC = () => {
                         <ServicePlaceholder icon={service.icon} />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0a050e]/85 via-transparent to-transparent pointer-events-none" />
-
-                      <div className="absolute top-4 left-4 md:top-5 md:left-5 z-20 flex items-center gap-2">
-                        <span className="border border-white/20 bg-[rgba(12,6,18,0.42)] backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] rounded-2xl flex items-center justify-center w-11 h-11 md:w-12 md:h-12">
-                          <service.icon className="w-5 h-5 icon-gradient" strokeWidth={1.5} aria-hidden />
-                        </span>
-                        {service.isNew && <NewBadge label={t('newBadge')} />}
-                      </div>
 
                       {service.galleryUrls && service.galleryUrls.length > 1 && (
                         <div className="absolute bottom-4 md:bottom-5 left-0 w-full flex justify-center z-20 px-4">
@@ -512,7 +569,7 @@ export const ServiceGrid: React.FC = () => {
                                   e.stopPropagation();
                                   setSelectedServiceImageIndex(idx);
                                 }}
-                                aria-label={language === 'cs' ? `Zobrazit obrázek ${idx + 1}` : `View image ${idx + 1}`}
+                                aria-label={copy.imageN(idx + 1)}
                                 aria-current={selectedServiceImageIndex === idx}
                                 className={`focus-ring relative shrink-0 w-12 h-9 md:w-16 md:h-11 rounded-full overflow-hidden transition-all duration-500 ${
                                   selectedServiceImageIndex === idx
@@ -539,9 +596,7 @@ export const ServiceGrid: React.FC = () => {
                   <div className="relative w-full md:w-[50%] lg:w-[42%] flex-1 md:flex-none p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto no-scrollbar">
                     <div className="absolute inset-0 glass-inner-glow opacity-70 pointer-events-none" aria-hidden />
                     <div className="relative flex flex-col flex-grow">
-                      <span className="eyebrow block mb-3 md:mb-5">
-                        {language === 'cs' ? 'Služby Studia' : 'Studio Services'}
-                      </span>
+                      <span className="eyebrow block mb-3 md:mb-5">{copy.eyebrowModal}</span>
 
                       <h3 id="service-modal-title" className="font-display font-bold text-ink text-3xl md:text-[44px] tracking-tightest leading-[1.08] mb-4 md:mb-6 pr-12 md:pr-0">
                         {service.title}
@@ -554,7 +609,7 @@ export const ServiceGrid: React.FC = () => {
                       </p>
 
                       {service.features && (
-                        <ul className="mb-8 md:mb-10 space-y-2.5 md:space-y-3">
+                        <ul className="mb-7 md:mb-9 space-y-2.5 md:space-y-3">
                           {service.features.map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-3">
                               <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-orchid-soft shrink-0 shadow-[0_0_10px_rgba(196,139,224,0.9)]" aria-hidden />
@@ -564,16 +619,23 @@ export const ServiceGrid: React.FC = () => {
                         </ul>
                       )}
 
+                      {modalPrice && (
+                        <p className="mb-6 flex items-baseline gap-3">
+                          <span className="eyebrow">{copy.priceLabel}</span>
+                          <span className="font-display font-semibold text-ink text-lg">{modalPrice}</span>
+                        </p>
+                      )}
+
                       {/* Call to action */}
                       <div className="pt-5 md:pt-6 border-t border-white/10 mt-auto">
-                        <p className="eyebrow block mb-3 md:mb-4">{language === 'cs' ? 'Poptat tuto službu' : 'Request service'}</p>
+                        <p className="eyebrow block mb-3 md:mb-4">{copy.request}</p>
                         <div className="flex flex-col gap-2.5">
                           <a
                             href="#contact"
                             onClick={closeModal}
                             className="btn-primary focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
                           >
-                            {language === 'cs' ? 'Mám zájem' : 'I am interested'}
+                            {copy.interested}
                             <ArrowUpRight className="w-5 h-5 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
                           </a>
 
@@ -584,7 +646,7 @@ export const ServiceGrid: React.FC = () => {
                               rel="noreferrer"
                               className="btn-glass focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
                             >
-                              {language === 'cs' ? 'Chci vidět ukázku' : 'View demo'}
+                              {copy.demo}
                               <ArrowUpRight className="w-5 h-5 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
                             </a>
                           )}
@@ -595,7 +657,7 @@ export const ServiceGrid: React.FC = () => {
                               onClick={closeModal}
                               className="btn-glass focus-ring group flex items-center justify-between w-full px-6 py-3.5 md:py-4 rounded-full font-display font-medium text-sm md:text-base"
                             >
-                              {language === 'cs' ? 'Zobrazit ceník AI vizualizací' : 'See AI visualization pricing'}
+                              {copy.aiPricingFull}
                               <ArrowRight className="w-5 h-5 text-orchid-soft transition-transform duration-500 group-hover:translate-x-0.5" aria-hidden />
                             </a>
                           )}
@@ -603,7 +665,7 @@ export const ServiceGrid: React.FC = () => {
                           <button
                             type="button"
                             onClick={closeModal}
-                            className="focus-ring w-full py-2.5 rounded-full font-display text-sm text-ink-3 hover:text-ink transition-colors duration-300"
+                            className="focus-ring w-full py-2.5 min-h-[44px] rounded-full font-display text-sm text-ink-3 hover:text-ink transition-colors duration-300"
                           >
                             {t('portfolioCloseBtn')}
                           </button>

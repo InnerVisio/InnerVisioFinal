@@ -1,4 +1,4 @@
-import { Box, Layers, MonitorPlay, Zap, Cuboid, Eye, Sparkles } from 'lucide-react';
+import { Box, Layers, MonitorPlay, Zap, Cuboid, Eye, Sparkles, Clapperboard } from 'lucide-react';
 import { ServiceItem, ProjectItem, PricingItem } from './types';
 
 export const SERVICES: ServiceItem[] = [
@@ -102,24 +102,57 @@ export const SERVICES: ServiceItem[] = [
     icon: Sparkles,
     colSpan: 1,
     rowSpan: 1,
-    isNew: true,
-    tags: ['Fast Delivery', '3 Styles'],
-    // No imageUrl yet: a branded placeholder is shown until a real AI example is added here
+    imageUrl: '/AIVizualizace/exterier-po.webp',
+    galleryUrls: [
+      '/AIVizualizace/exterier-po.webp',
+      '/AIVizualizace/exterier-pred.webp',
+      '/AIVizualizace/interier-obyvak.webp'
+    ],
+  },
+  {
+    id: '8',
+    title: 'Video tvorba',
+    description: 'Natočené videoprohlídky nemovitostí, i z dronu. Nemovitost v pohybu pro inzerát, web i sociální sítě.',
+    detailedDescription: 'Nemovitost natočíme na místě a postaváme z ní videoprohlídku, která prodává. Stabilizované záběry interiéru, u domů i dron z výšky, střih, hudba, titulky a logo vaší kanceláře. Video dodáme ve formátu 16:9 pro web a inzerci i 9:16 pro Reels a Stories.',
+    features: ['Natáčení nemovitosti přímo na místě', 'Záběry z dronu pro exteriér a okolí', 'Střih, hudba, titulky a logo', 'Formát 16:9 i 9:16 pro Reels'],
+    icon: Clapperboard,
+    colSpan: 2,
+    rowSpan: 1,
+    imageUrl: '/VizualizaceExterieruTran/dji-fly-07_opt.webp',
+    galleryUrls: [
+      '/VizualizaceExterieruTran/dji-fly-07_opt.webp'
+    ],
   }
 ];
 
-// Before/after example in the AI pricing tab. Fill in image paths (e.g. '/AIVizualizace/pred.webp');
-// while empty, the slider shows branded placeholders.
+// Before/after example in the AI pricing tab (same viewpoint, 3:2). Empty strings fall back to placeholders.
 export const AI_BEFORE_AFTER = {
-  before: '',
-  after: '',
+  before: '/AIVizualizace/exterier-pred.webp',
+  after: '/AIVizualizace/exterier-po.webp',
+  // Small version for the services card (displayed at ~450 px wide)
+  afterSmall: '/AIVizualizace/exterier-po-900.webp',
 };
+
+// AI showcase: sample video (H.264 MP4 with an "AI GENERATED" label burned in) and extra still examples
+export const AI_VIDEO = {
+  src: '/video/ai-video-nemovitosti.mp4',
+  poster: '/video/ai-video-nemovitosti-poster.jpg',
+  width: 1920,
+  height: 1080,
+  durationSeconds: 30,
+};
+
+export const AI_GALLERY = [
+  { src: '/AIVizualizace/exterier-zahrada.webp', cs: 'AI exteriér: terasa s pergolou a zahrada', en: 'AI exterior: terrace with pergola and garden' },
+  { src: '/AIVizualizace/interier-obyvak.webp', cs: 'AI interiér: obývací pokoj', en: 'AI interior: living room' },
+  { src: '/AIVizualizace/interier-loznice.webp', cs: 'AI interiér: ložnice v teplých tónech', en: 'AI interior: bedroom in warm tones' },
+];
 
 export const PRICING: PricingItem[] = [
   {
     id: '1',
     title: 'Vizualizace Exteriéru',
-    price: 'od 5 000',
+    price: 'od 6 000',
     unit: 'Kč',
     features: ['4 snímky vizualizací', '4 snímky zákresy do dronu', 'Fotorealistické vizualizace'],
     isPopular: true,
@@ -127,28 +160,28 @@ export const PRICING: PricingItem[] = [
   {
     id: '2',
     title: 'Vizualizace Interiéru',
-    price: 'od 2 500',
+    price: 'od 3 000',
     unit: 'Kč / celá nemovitost',
     features: ['Detailní textury', 'Designový nábytek', 'Osvětlení na míru', '2 revize'],
   },
   {
     id: '3',
     title: '3D půdorysy',
-    price: 'od 600',
+    price: 'od 720',
     unit: 'Kč',
     features: ['Včetně vybavení', 'Materiálové řešení', 'Vysoké rozlišení', 'Popis místností'],
   },
   {
     id: '4',
     title: '2D půdorysy',
-    price: 'od 400',
+    price: 'od 480',
     unit: 'Kč',
     features: ['Marketingový styl', 'Barevné schéma', 'Kótování', 'Logo studia'],
   },
   {
     id: '5',
     title: 'Virtuální prohlídky',
-    price: 'od 3 000',
+    price: 'od 3 600',
     unit: 'Kč',
     features: ['Matterport', 'Interaktivní body', 'Vr kompatibilita'],
   },
@@ -158,6 +191,13 @@ export const PRICING: PricingItem[] = [
     price: 'Ceněno individuálně',
     unit: '',
     features: ['Moderní design', 'Integrace konfigurátoru', 'SEO optimalizace', 'CMS systém'],
+  },
+  {
+    id: '7',
+    title: 'Video tvorba',
+    price: 'od 3 900',
+    unit: 'Kč',
+    features: ['Videoprohlídka interiéru od 3 900 Kč', 'Videoprohlídka s dronem od 5 900 Kč', 'Střih, hudba, titulky a logo', 'Formát 16:9 i 9:16 pro Reels'],
   }
 ];
 
@@ -175,7 +215,7 @@ export const PROJECTS: ProjectItem[] = [
       '/VizualizaceBludovice/IMG_6214_opt.webp'
     ],
     heightClass: 'aspect-[4/5]',
-    description: 'Návrh and vizualizace moderního bydlení v Bludovicích. Důraz na čisté linie, útulnou atmosféru a funkční prostorové uspořádání.',
+    description: 'Návrh a vizualizace moderního bydlení v Bludovicích. Důraz na čisté linie, útulnou atmosféru a funkční prostorové uspořádání.',
   },
   {
     id: '2',
@@ -252,6 +292,55 @@ export const PROJECTS: ProjectItem[] = [
     heightClass: 'aspect-[4/5]',
     description: 'Na místě původní střechy vznikla nástavba s dalším patrem, novými byty a terasou. Detaily byly navrženy tak, aby budoucí majitelé viděli, jak bude jejich nový domov vypadat.',
   },
+  {
+    id: '7',
+    title: 'Rekonstrukce venkovského domu',
+    location: 'ČR',
+    category: 'AI vizualizace',
+    imageUrl: '/AIVizualizace/exterier-po.webp',
+    galleryUrls: [
+      '/AIVizualizace/exterier-po.webp',
+      '/AIVizualizace/exterier-pred.webp'
+    ],
+    heightClass: 'aspect-[4/5]',
+    description: 'Z fotky zchátralého domu vznikla AI vizualizace hotové rekonstrukce. Stejný záběr, stejná geometrie. Na druhém snímku najdete stav před.',
+  },
+  {
+    id: '8',
+    title: 'Terasa s pergolou a zahrada',
+    location: 'ČR',
+    category: 'AI vizualizace',
+    imageUrl: '/AIVizualizace/exterier-zahrada.webp',
+    galleryUrls: [
+      '/AIVizualizace/exterier-zahrada.webp'
+    ],
+    heightClass: 'aspect-[4/5]',
+    description: 'AI vizualizace exteriéru: zastřešená terasa, ohniště a zahrada ve světle zapadajícího slunce.',
+  },
+  {
+    id: '9',
+    title: 'Obývací pokoj v zelených tónech',
+    location: 'ČR',
+    category: 'AI vizualizace',
+    imageUrl: '/AIVizualizace/interier-obyvak.webp',
+    galleryUrls: [
+      '/AIVizualizace/interier-obyvak.webp'
+    ],
+    heightClass: 'aspect-[4/5]',
+    description: 'AI vizualizace interiéru s měkkým denním světlem, přírodními materiály a výrazným akcentem v olivové barvě.',
+  },
+  {
+    id: '10',
+    title: 'Ložnice v teplých tónech',
+    location: 'ČR',
+    category: 'AI vizualizace',
+    imageUrl: '/AIVizualizace/interier-loznice.webp',
+    galleryUrls: [
+      '/AIVizualizace/interier-loznice.webp'
+    ],
+    heightClass: 'aspect-[4/5]',
+    description: 'AI vizualizace ložnice s vestavěnou šatnou, jemným osvětlením a lehkými záclonami.',
+  },
 ];
 
 export const HERO_SLIDES = [
@@ -283,4 +372,57 @@ export const HERO_SLIDES = [
     location: "ČR",
     status: "Nové"
   }
+];
+
+// Videos for the /socials page (Instagram/Facebook mockup). The two brand clips are silent 1080p slides;
+// the AI property tour has a soundtrack. `title`/`caption` are post copy shown in the mockup.
+export interface SocialVideo {
+  id: string;
+  src: string;
+  poster: string;
+  durationSeconds: number;
+  hasAudio: boolean;
+  title: { cs: string; en: string };
+  caption: { cs: string; en: string };
+}
+
+export const SOCIAL_HASHTAGS = ['#innervisio', '#aivizualizace', '#vizualizace', '#archviz', '#interier', '#exterier', '#realestate', '#reality', '#architektura'];
+
+export const SOCIAL_VIDEOS: SocialVideo[] = [
+  {
+    id: 'ai-vizualizace',
+    src: '/video/brand-ai-vizualizace.mp4',
+    poster: '/video/brand-ai-vizualizace-poster.jpg',
+    durationSeconds: 20,
+    hasAudio: false,
+    title: { cs: 'AI vizualizace: nápad je náš, AI ho zrealizuje', en: 'AI visualization: the idea is ours, AI brings it to life' },
+    caption: {
+      cs: 'Stejný styl. Úplně jiný výsledek. Rozdíl dělá člověk za vizualizací. Z jedné fotky nový domov.',
+      en: 'Same style. A completely different result. A professional makes the difference. From one photo, a new home.',
+    },
+  },
+  {
+    id: 'ai-vyhody',
+    src: '/video/brand-ai-vyhody.mp4',
+    poster: '/video/brand-ai-vyhody-poster.jpg',
+    durationSeconds: 22.5,
+    hasAudio: false,
+    title: { cs: 'Většina lidí si myslí, že stačí tohle. Nestačí.', en: 'Most people think this is enough. It is not.' },
+    caption: {
+      cs: 'Rychle. Dostupně. Ve variantách. Hotovo i do druhého dne, interiéry i exteriéry. Vizualizace i AI.',
+      en: 'Fast. Affordable. In variants. Ready within a day or two, interiors and exteriors. Visualization and AI.',
+    },
+  },
+  {
+    id: 'ai-videoprohlidka',
+    src: AI_VIDEO.src,
+    poster: AI_VIDEO.poster,
+    durationSeconds: AI_VIDEO.durationSeconds,
+    hasAudio: true,
+    title: { cs: 'AI videoprohlídka: Dolní, Ostrava – Zábřeh', en: 'AI video tour: Dolní, Ostrava – Zábřeh' },
+    caption: {
+      cs: 'Rozpohybujte inzerát. Videoprohlídka interiéru z fotek do 24 hodin.',
+      en: 'Bring your listing to life. An interior video tour made from photos within 24 hours.',
+    },
+  },
 ];

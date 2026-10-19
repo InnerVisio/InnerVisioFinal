@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Instagram, Loader2, Check, Mail } from 'lucide-react';
+import { Instagram, Facebook, Loader2, Check, Mail } from 'lucide-react';
 import { PrivacyPolicyModal, TermsOfServiceModal } from './LegalModals';
 import { useLanguage } from './LanguageContext';
 import { openCookieSettings, track } from '../analytics';
+import { SITE } from '../site';
+
+const FACEBOOK: string = SITE.facebook;
 
 const LOCALIZED_NAV_ITEMS = [
   { labelKey: 'servicesLabel', href: '#services' },
@@ -14,7 +17,12 @@ const LOCALIZED_NAV_ITEMS = [
 
 const FOOTER_LINK = 'focus-ring rounded text-ink-2 md:hover:text-orchid-pink transition-colors duration-300';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  /** '' on the home page; '/' on sub-pages so in-page anchors become '/#services' */
+  homePrefix?: string;
+}
+
+export const Footer: React.FC<FooterProps> = ({ homePrefix = '' }) => {
   const { language, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -75,7 +83,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-14 md:mb-16">
 
           <div className="md:col-span-5">
-            <a href="#root" className="focus-ring group inline-flex items-center gap-3.5 mb-6 rounded-2xl" aria-label="InnerVisio">
+            <a href={homePrefix ? '/' : '#root'} className="focus-ring group inline-flex items-center gap-3.5 mb-6 rounded-2xl" aria-label="InnerVisio">
               <span className="bg-logo-plum w-12 h-12 rounded-2xl flex items-center justify-center border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_10px_30px_rgba(0,0,0,0.45)] transition-shadow duration-500 md:group-hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_36px_rgba(162,77,184,0.5)]">
                 <img src="/FavIcon.png" alt="" className="w-8 h-8 object-contain" width={32} height={32} />
               </span>
@@ -89,37 +97,49 @@ export const Footer: React.FC = () => {
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href="mailto:innervisio@gmail.com"
+                href="mailto:zakazky@innervisio.cz"
                 className="focus-ring btn-glass inline-flex items-center gap-2.5 rounded-full pl-2 pr-5 py-2 group"
               >
                 <span className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.06] border border-white/15">
                   <Mail className="w-4 h-4 icon-gradient" strokeWidth={1.5} />
                 </span>
-                <span className="link-orchid md:group-hover:text-orchid-pink font-display font-medium text-sm sm:text-[15px]">innervisio@gmail.com</span>
+                <span className="link-orchid md:group-hover:text-orchid-pink font-display font-medium text-sm sm:text-[15px]">zakazky@innervisio.cz</span>
               </a>
               <a
-                href="https://www.instagram.com/innervisio/"
+                href={SITE.instagram}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="focus-ring btn-glass w-12 h-12 rounded-full flex items-center justify-center"
               >
                 <Instagram className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} />
               </a>
+              {FACEBOOK && (
+                <a
+                  href={FACEBOOK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="focus-ring btn-glass w-12 h-12 rounded-full flex items-center justify-center"
+                >
+                  <Facebook className="w-[18px] h-[18px] icon-gradient" strokeWidth={1.5} />
+                </a>
+              )}
             </div>
           </div>
 
           <div className="md:col-span-2 md:col-start-8">
             <h3 className="eyebrow mb-5">{language === 'cs' ? 'Mapa stránek' : 'Sitemap'}</h3>
             <ul className="space-y-3.5 text-[15px] font-light">
-              <li><a href="#root" className={FOOTER_LINK}>{language === 'cs' ? 'Domů' : 'Home'}</a></li>
+              <li><a href={homePrefix ? '/' : '#root'} className={FOOTER_LINK}>{language === 'cs' ? 'Domů' : 'Home'}</a></li>
               {LOCALIZED_NAV_ITEMS.map((item) => (
                 <li key={item.labelKey}>
-                  <a href={item.href} className={FOOTER_LINK}>
+                  <a href={`${homePrefix}${item.href}`} className={FOOTER_LINK}>
                     {t(item.labelKey)}
                   </a>
                 </li>
               ))}
+              <li><a href="/socials" className={FOOTER_LINK}>Socials</a></li>
             </ul>
           </div>
 

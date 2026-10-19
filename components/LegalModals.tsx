@@ -140,7 +140,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }: ModalProps) {
 
           <div>
             <h3 className="font-display text-lg font-semibold tracking-tightest text-ink mt-2 mb-3">5. Kontaktujte nás</h3>
-            <p>Pokud máte jakékoli dotazy nebo chcete uplatnit svá práva, kontaktujte nás na e-mailu: <a href="mailto:innervisio@gmail.com" className="link-orchid focus-ring rounded font-medium">innervisio@gmail.com</a>.</p>
+            <p>Pokud máte jakékoli dotazy nebo chcete uplatnit svá práva, kontaktujte nás na e-mailu: <a href="mailto:zakazky@innervisio.cz" className="link-orchid focus-ring rounded font-medium">zakazky@innervisio.cz</a>.</p>
           </div>
           
           <p className="mt-8 pt-4 border-t border-white/[0.08] text-xs text-ink-3">Poslední aktualizace: Duben 2026</p>

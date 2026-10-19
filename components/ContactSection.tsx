@@ -17,6 +17,7 @@ const SERVICE_OPTIONS: Record<Language, { id: ServiceOptionId; label: string }[]
     { id: 'floor-3d', label: "3D Floor Plans" },
     { id: 'floor-2d', label: "2D Floor Plans" },
     { id: 'tour', label: "Virtual Tours" },
+    { id: 'video', label: "Video production" },
     { id: 'web', label: "Developer Configurator" },
   ],
   cs: [
@@ -29,6 +30,7 @@ const SERVICE_OPTIONS: Record<Language, { id: ServiceOptionId; label: string }[]
     { id: 'floor-3d', label: "3D Půdorysy" },
     { id: 'floor-2d', label: "2D Půdorysy" },
     { id: 'tour', label: "Virtuální prohlídky" },
+    { id: 'video', label: "Video tvorba" },
     { id: 'web', label: "Web s konfigurátorem" },
   ],
 };
@@ -360,7 +362,7 @@ export const ContactSection: React.FC = () => {
             {/* Email: always visible and prominent */}
             <motion.a
               {...blurInRise(0.15, 20)}
-              href="mailto:innervisio@gmail.com"
+              href="mailto:zakazky@innervisio.cz"
               className="group focus-ring flex items-center gap-4 w-full sm:w-fit max-w-full mb-8 p-3 pr-6 rounded-[22px] glass-pill !rounded-[22px] md:hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_0_40px_rgba(162,77,184,0.35)] transition-shadow duration-500"
             >
               <span className={BRAND.iconChip}>
@@ -368,7 +370,7 @@ export const ContactSection: React.FC = () => {
               </span>
               <span className="min-w-0">
                 <span className="block text-xs font-medium uppercase tracking-[0.18em] text-ink-3 font-display">Email</span>
-                <span className="block link-orchid md:group-hover:text-orchid-pink font-display font-medium text-lg sm:text-xl truncate">innervisio@gmail.com</span>
+                <span className="block link-orchid md:group-hover:text-orchid-pink font-display font-medium text-lg sm:text-xl truncate">zakazky@innervisio.cz</span>
               </span>
             </motion.a>
 

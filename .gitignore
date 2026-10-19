@@ -25,3 +25,9 @@ dist-ssr
 
 # Brand manual (large binary, kept outside the repo)
 InnerVisio-Brand-Guidelines-Plum-Keynote.pdf
+
+# Source video (the web version lives in public/video)
+*.mov
+
+# Source videos (web versions live in public/video)
+/InnerVisio-*.mp4

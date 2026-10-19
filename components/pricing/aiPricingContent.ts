@@ -21,10 +21,8 @@ export interface AiPricingContent {
   tabAi: string;
   tab3d: string;
   tab3dShort: string;
-  newBadge: string;
   from: string;
   benefits: { icon: BenefitIcon; title: string; text: string }[];
-  featuredBadge: string;
   plans: AiPlan[];
   package: {
     eyebrow: string;
@@ -64,7 +62,6 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
     tabAi: 'AI vizualizace',
     tab3d: 'Klasické 3D vizualizace',
     tab3dShort: 'Klasické 3D',
-    newBadge: 'Nové',
     from: 'od',
     benefits: [
       {
@@ -88,7 +85,6 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
         text: 'Každý snímek ručně kontrolujeme. Držíme geometrii, proporce, okna i světlo prostoru.',
       },
     ],
-    featuredBadge: 'Nejoblíbenější',
     plans: [
       {
         id: 'ai-staging',
@@ -167,7 +163,7 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
         { label: 'Podklady', ai: 'Fotka, skica nebo půdorys', classic: 'Projektová dokumentace, 3D model' },
         { label: 'Přesnost', ai: 'Věrná atmosféra a proporce', classic: 'Přesně podle projektu, každý materiál' },
         { label: 'Ideální pro', ai: 'Inzerci, rekonstrukce, rychlé ověření nápadu', classic: 'Developerské projekty, prodej z plánu, architekty' },
-        { label: 'Cena', ai: 'od 290 Kč / fotka', classic: 'od 2 500 Kč' },
+        { label: 'Cena', ai: 'od 290 Kč / fotka', classic: 'od 3 000 Kč' },
       ],
       scrollHint: 'posuňte tabulku do strany',
       noticeTitle: 'Férově a transparentně.',
@@ -180,7 +176,6 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
     tabAi: 'AI visualization',
     tab3d: 'Classic 3D rendering',
     tab3dShort: 'Classic 3D',
-    newBadge: 'New',
     from: 'from',
     benefits: [
       {
@@ -204,7 +199,6 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
         text: 'We check every image by hand. Geometry, proportions, windows and light stay true to the space.',
       },
     ],
-    featuredBadge: 'Most popular',
     plans: [
       {
         id: 'ai-staging',
@@ -283,7 +277,7 @@ export const AI_PRICING_CONTENT: Record<Language, AiPricingContent> = {
         { label: 'Input', ai: 'Photo, sketch or floor plan', classic: 'Project documentation, 3D model' },
         { label: 'Accuracy', ai: 'True atmosphere and proportions', classic: 'Exactly to plan, every material' },
         { label: 'Best for', ai: 'Listings, renovations, quick idea checks', classic: 'Developments, off-plan sales, architects' },
-        { label: 'Price', ai: 'from €12 / photo', classic: 'from €100' },
+        { label: 'Price', ai: 'from €12 / photo', classic: 'from €120' },
       ],
       scrollHint: 'scroll the table sideways',
       noticeTitle: 'Fair and transparent.',

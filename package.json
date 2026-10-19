@@ -8,7 +8,8 @@
     "build": "vite build && vite build --ssr entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "lint": "tsc --noEmit && npm run build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:design": "node scripts/check-design-rules.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.31.0",

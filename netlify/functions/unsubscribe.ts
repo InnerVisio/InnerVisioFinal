@@ -20,6 +20,6 @@ export const handler: Handler = async (event) => {
     return json(event, 200, { success: true });
   } catch (err) {
     console.error("unsubscribe failed:", err);
-    return json(event, 502, { error: "Odhlášení se nepodařilo. Napište nám prosím na innervisio@gmail.com." });
+    return json(event, 502, { error: "Odhlášení se nepodařilo. Napište nám prosím na zakazky@innervisio.cz." });
   }
 };

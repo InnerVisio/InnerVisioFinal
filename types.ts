@@ -11,8 +11,6 @@ export interface ServiceItem {
   galleryUrls?: string[];
   detailedDescription?: string;
   features?: string[];
-  isNew?: boolean;
-  tags?: string[];
 }
 
 export interface ProjectItem {

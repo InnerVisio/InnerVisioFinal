@@ -34,7 +34,7 @@ export const handler: Handler = async (event) => {
   } catch (err) {
     console.error("send-email failed:", err);
     return json(event, 502, {
-      error: "Zprávu se nepodařilo odeslat. Napište nám prosím přímo na innervisio@gmail.com.",
+      error: "Zprávu se nepodařilo odeslat. Napište nám prosím přímo na zakazky@innervisio.cz.",
     });
   }
 };
